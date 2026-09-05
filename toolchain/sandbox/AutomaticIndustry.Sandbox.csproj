@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Sandbox project for offline testing of AutomaticIndustry components.
+    
+    This project does NOT reference Unity or the game assemblies at runtime.
+    Instead it provides lightweight stubs of the game types that the mod depends on,
+    allowing unit tests and pressure tests to exercise the mod's logic paths
+    (circuit breaker, option gating, reflection helpers, state machine utilities,
+    work safety lists, automation registry) without a running game instance.
+    
+    For tests that exercise the actual game assemblies (integration / smoke tests),
+    use the IntegrationSandbox configuration which references the real DLLs.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net471</TargetFramework>
+    <AssemblyName>AutomaticIndustry.Sandbox</AssemblyName>
+    <RootNamespace>AutomaticIndustry.Sandbox</RootNamespace>
+    <LangVersion>7.3</LangVersion>
+    <OutputType>Exe</OutputType>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <ONIManaged Condition="'$(ONIManaged)' == ''">$(ONI_MANAGED)</ONIManaged>
+    <ONIManaged Condition="'$(ONIManaged)' == ''">..\..\Managed\Managed</ONIManaged>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="**\*.cs" Exclude="bin\**;obj\**" />
+  </ItemGroup>
+
+  <!-- Stub mode: no game DLL references, stubs provide the types -->
+  <ItemGroup Condition="'$(Configuration)' != 'Integration'">
+    <!-- No external references needed for stub tests -->
+  </ItemGroup>
+
+  <!-- Integration mode: reference real game DLLs for smoke tests -->
+  <ItemGroup Condition="'$(Configuration)' == 'Integration'">
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ONIManaged)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ONIManaged)/Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ONIManaged)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ONIManaged)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(ONIManaged)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

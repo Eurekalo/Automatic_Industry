@@ -1,0 +1,49 @@
+# ====================================================================
+# Automatic Industry (.gitignore)
+# ====================================================================
+
+# Build outputs & temporary compilation files
+[Bb]in/
+[Oo]bj/
+dist/
+
+# Visual Studio / Rider / VS Code / OS metadata
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+
+# Game binaries & assemblies (strictly excluded from repository)
+Managed/
+StreamingAssets/
+
+# Packaged zip archives & archive directories
+*.zip
+zip_src_archived/
+original_zip_archived/
+toolchain/temp_staging/
+scratch/
+-p/
+
+# Uncompressed mod release directories
+AutomaticIndustry-[0-9]*/
+
+# Old nested extraction snapshot directory
+AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/
+toolchain/toolchain/
+
+# Decompiled reference dumps
+toolchain/decompiled/
+
+# Separate mod projects and experimental scratch directories
+ModMenu*/
+ONITogetherExtender*/
+ForAutomaticIndustryDev/
+ForCompatibility/
+ForModMenuDev/

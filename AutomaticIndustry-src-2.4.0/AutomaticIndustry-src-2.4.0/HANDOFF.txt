@@ -1,0 +1,328 @@
+================================================================================
+AUTOMATIC INDUSTRY (ONI mod) — HANDOFF DOCUMENT
+Shipped version : 2.4.0  (mod_info.yaml version: 2.4.0, staticID: AutomaticIndustry)
+Document date   : 2026-08-23
+Audience        : the next AI / developer who continues this project
+Scope           : (A) state of 2.4.0, (B) UNIMPLEMENTED 2.4.1 plan + analysis,
+                  (C) per-file function reference for every .cs module
+================================================================================
+
+--------------------------------------------------------------------------------
+0. PROJECT FACTS
+--------------------------------------------------------------------------------
+- Game            : Oxygen Not Included, U59 branch (minimumSupportedBuild 744825)
+- Target framework: .NET Framework 4.7.2
+- Patching        : Harmony 2 (Pardeike), PLib options (POptions), ILRepack merges
+                    PLib into AutomaticIndustry.dll so the "Options" button shows.
+- Repo layout     : src/ (C# sources), toolchain/Managed (game assemblies used for
+                    compiling; NOT redistributable, excluded from src zip),
+                    toolchain/nuget, tools/ (name-extraction python helpers),
+                    docs/DEVELOPMENT.md, translations/, build.sh, dist/.
+- Languages       : en (base), zh-CN, zh-TW, ko, ja. Building names are pulled from
+                    vanilla STRINGS where possible (VanillaBuildingNames.generated.cs).
+- License         : MIT, original author credit: 一见倾心 (auto machine 机器自动工作).
+- Design rules that MUST be preserved:
+    * Never add new buildings; never change vanilla recipes/rates (except the
+      explicit Oil Refinery 50%/100% option).
+    * Every automation is an individual toggle; new automations default OFF.
+    * All code comments in English, industrial-grade formatting.
+    * Automation may only run when ALL vanilla run conditions hold (power,
+      ingredients, cooldown, room, storage, environment).
+    * No custom save fields beyond necessary [Serialize] timers.
+    * Every patch wrapped in try/catch; a single failure disables one building,
+      never crashes the game (see AutoWorkControllerBase circuit breaker).
+
+--------------------------------------------------------------------------------
+1. WHAT 2.4.0 ALREADY DOES (baseline for the next iteration)
+--------------------------------------------------------------------------------
+- ComplexFabricator family: duplicantOperated = false via prefab injection.
+- Specialised controllers for: Oil Refinery (50/100 toggle), Oil Well Cap venting,
+  GeoTuner, Food Smoker, Compost, Manual Generator, Telescopes, Mission Control,
+  Tinker stations (Farm Station / Spice Grinder shell), Research buildings,
+  Valves (liquid/gas value change without a Duplicant), Ranch stations
+  (grooming / shearing / milking incl. Aquatic variants).
+- Storage release: AutoStorageReleaseController + VanillaEmptyPaths (prefers the
+  vanilla "empty" workable/state transition) + HardThresholdRelease (hard 90%
+  fill fallback for Desalinator salt, MilkSeparator Caviar/Brackwax).
+- AutoEmptyTriggerPatches hooks MilkSeparator.RequiresEmptying and
+  Desalinator.CreateEmptyChore for instant, vanilla-shaped drops.
+- SweeperResearchDelivery option: research ManualDeliveryKG chores swapped from
+  ResearchFetch to MachineFetch so Auto-Sweepers can supply Super Computer /
+  Virtual Planetarium. NOTE: this is currently a BLANKET swap — see 2.1 below.
+- Master switch "Enable all automation", bilingual option labels, live options
+  language refresh (OptionsScreenRefresher), localization self-audit.
+
+Known-broken / unsatisfying at 2.4.0 (reported by the user, all still open):
+  a) Spice Grinder never actually seasons food automatically.
+  b) Auto-Sweeper cannot move bottled water from LiquidBottler /
+     LiquidPumpingStation into Advanced Research Center.
+  c) Duplicants still walk up and "operate" machines that already run unattended,
+     wasting Duplicant work time.
+  d) Manual Radbolt Generator and Sushi Bar: incomplete loop animation, no
+     progress bar.
+
+--------------------------------------------------------------------------------
+2. VERSION 2.4.1 — PLANNED BUT **NOT IMPLEMENTED** (full analysis)
+--------------------------------------------------------------------------------
+Nothing below exists in the shipped 2.4.0 code. No file was modified for 2.4.1.
+
+2.1 Spice Grinder真正的自动化 (issue a)
+  Findings from IL:
+    - Spice Grinder is NOT a plain ComplexFabricator. It owns
+      `SpiceGrinder` / `SpiceGrinder.StatesInstance` plus `SpiceGrinderWorkable`.
+      Setting duplicantOperated=false on a fabricator therefore does nothing.
+    - Its food delivery chore is `CookFetch`, which robots (Auto-Sweeper) do not
+      serve; the seasoned output is produced through the `SpiceFood` completion
+      path inside the state machine.
+  Plan:
+    - New `AutoSpiceGrinderController : AutoWorkControllerBase` that drives the
+      vanilla StatesInstance: only start when a valid spice recipe exists, spice
+      ingredient present, a spiceable food target reserved, building operational,
+      and no existing worker/reservation conflict.
+    - Reuse vanilla target selection, storage reservation, work timer and the
+      `SpiceFood` completion path. Cancel safely on target loss, power loss,
+      disable, deconstruct, save/load. Never double-season, never double-drop.
+    - Delivery: do NOT rewrite the global CookFetch chore type. Only for this
+      building instance, add a robot-servable fetch path so both Duplicants and
+      Auto-Sweepers can deliver ingredients/food.
+    - Output must stay an ordinary ground `Pickupable` (no work-target binding)
+      so vanilla Refrigerator / MiniFridge / SolidConduitInbox logistics take it.
+      Do NOT write cross-building teleport code.
+
+2.2 Advanced Research Center bottled-water supply (issue b)
+  Findings:
+    - Bottles emitted by LiquidBottler / LiquidPumpingStation carry
+      `GameTags.LiquidSource`-style tagging that makes them non-pickupable for
+      Auto-Sweepers in the relevant path.
+    - 2.4.0's blanket ResearchFetch -> MachineFetch replacement is wrong: when no
+      Auto-Sweeper exists or the sweeper cannot reach, Duplicant supply degrades.
+  Plan:
+    - Remove the blanket swap. Scope the change to the water `ManualDeliveryKG`
+      of Advanced Research Center instances whose option is enabled; create an
+      instance-scoped robot-compatible fetch path in ADDITION to the vanilla
+      ResearchFetch so Duplicants keep working normally.
+    - Never modify the global ResearchFetch / MachineFetch chore groups or
+      Duplicant priorities.
+    - For the bottler/pumping station only adjust pickupability of bottles that
+      are ALREADY finished and released by vanilla. Never let the sweeper pull
+      from inside building storage or substitute the bottling operation
+      (avoids duplication, deletion, state-machine corruption).
+
+2.3 Precise suppression of Duplicant "operate" chores (issue c)
+  Plan:
+    - Per automation mechanism, define which chores may survive: supply/fetch,
+      pickup, empty, sweep = KEEP. Fabricate / Work / Research / Tinker =
+      not created (or immediately cancelled) while that building's automation
+      is enabled.
+    - Prefer the building's native unmanned flag (duplicantOperated = false).
+      Only for controllers without a native entry point do building-INSTANCE
+      level chore suppression (LocalChoreProbe already finds the pending
+      workable; extend it to cancel rather than only probe).
+    - Never scan/modify global chore lists, never cancel logistics chores, never
+      touch buildings whose automation is off; option hot-toggle must restore
+      vanilla behaviour immediately.
+
+2.4 Manual Radbolt Generator & Sushi Bar animation/progress (issue d)
+  Plan:
+    - Radbolt: run the vanilla fabricator order + work state instead of only
+      playing a cosmetic anim. Sync `workTimeRemaining`, order progress,
+      meter/progress bar, Operational active state and completion callback.
+    - Sushi Bar: keep vanilla recipe queue and storage; while unmanned drive
+      `working_pre -> working_loop -> working_pst` (verify actual kanim state
+      names) and do NOT try to play Duplicant-only interaction anims.
+    - Interrupt, power loss, order cancel, disable, deconstruct must stop the
+      anim and reset progress; completion must fire exactly once.
+
+2.5 Audit & verification checklist that 2.4.1 must satisfy
+    - Per building: target selection, storage ownership, fetch type,
+      reachability, worker dependency, animation, progress, completion,
+      cancellation, save/load, deconstruct.
+    - Test stubs: spice grinder with no target / vanished target / concurrent
+      supply / duplicate tick; research water delivered by both Duplicant and
+      Sweeper paths; automated work leaves logistics chores but no operate
+      chores; Radbolt/Sushi interrupt-recovery and single completion.
+    - Static audit: no global chore rewrites, no unsafe null-worker calls, no
+      double release, no leaked event subscriptions, no per-frame logging.
+    - Build Release with toolchain/Managed (U59), verify package structure,
+      output AutomaticIndustry-2.4.1.zip + AutomaticIndustry-src-2.4.1.zip.
+    - In-game stress scenarios cannot be replaced by stubs; ship an explicit
+      in-game acceptance checklist.
+
+--------------------------------------------------------------------------------
+3. MODULE / FUNCTION REFERENCE (src/**.cs, 44 files)
+--------------------------------------------------------------------------------
+
+[ENTRY]
+src/AutoMachineMod.cs
+  AutoMachineMod : UserMod2
+    OnLoad(harmony)            – PLib init, POptions registration, string
+                                 registration, Harmony PatchAll.
+    RegisterStrings()          – LocString.CreateLocStringKeys for STRINGS tree.
+  DbInitializePatch.Postfix()  – after Db init: apply localization binders.
+  ModsScreenActivatePatch      – Prepare/TargetMethod/Postfix: re-apply option
+                                 texts when the mods screen opens (live language).
+
+[AUTOMATION REGISTRY / SAFETY]
+src/Automation/AutomationEntry.cs
+  AutomationEntry              – one automated building: OptionKey,
+                                 ConfigTypeName (soft-resolved by name for DLC),
+                                 RoomRequired flag, mechanism + driver info.
+src/Automation/AutomationMechanism.cs
+  enum AutomationMechanism     – which controller family drives the building
+                                 (fabricator, workable, storage release, ranch,
+                                 research, tinker, ...).
+src/Automation/AutomationRegistry.cs
+  Entries[]                    – the single source of truth table of all
+                                 automatable buildings.
+  Find(optionKey)              – lookup by option key.
+  PrefabIdOf(entry)            – resolve prefab id from the config type.
+  GeyserStudyKey               – special key for geyser first-study automation.
+src/Automation/LocalChoreProbe.cs
+  FindPendingWorkable(building)– finds the Workable the vanilla chore WOULD use,
+                                 by scanning components and private state-machine
+                                 chore fields (cached FieldInfo per type).
+  ScanComponents / ScanStateMachines / Accept / ChoreFieldsOf – helpers.
+  NOTE: 2.4.1 should extend this to *cancel* operate chores (see 2.3).
+src/Automation/WorkSafety.cs
+  UnsafeTick / UnsafeComplete  – name blacklists of Workable types that crash if
+                                 ticked/completed with a null worker.
+  CanTickWithoutWorker / CanCompleteWithoutWorker / Matches.
+
+[COMPONENTS — controllers attached to prefabs]
+src/Components/AutoWorkControllerBase.cs   (base class of nearly everything)
+  Configure(key)               – bind the option key.
+  Update()                     – interval accumulator (0.2 s), option gate,
+                                 circuit breaker (3 failures -> disabled),
+                                 recovery timer (60 s, max 5 recoveries).
+  Prepare() / Step(dt) / StopAutomation() – lifecycle hooks for subclasses.
+  Guarded(context, action)     – try/catch + failure counting.
+  ApplyRoomOverride()          – waive room requirement when the option is on.
+  SetActive / IsOperational / StartAnimation / StopAnimation / OnCleanUp.
+src/Components/AutoWorkableController.cs
+  Generic driver: advances a Workable by dt, guarded by WorkSafety, calls
+  OnCompleteWork once, then Release(). IsWorkAllowed() is the subclass hook.
+src/Components/AutoTelescopeController.cs
+  Telescope/Enclosed Telescope: overrides IsWorkAllowed (analysis available).
+src/Components/AutoFabricatorController.cs
+  ComplexFabricator family: captures/restores duplicantOperated, drives working
+  animation; SelfAnimatedKey exempts MANUALHIGHENERGYPARTICLESPAWNER.
+src/Components/AutoManualGeneratorController.cs
+  Manual generator: drives the generator workable while power is demanded.
+src/Components/AutoCompostController.cs
+  Compost turning on a timer + turning animation (TurningAnims candidates).
+src/Components/AutoFoodSmoker.cs (ISim1000ms)
+  Smoker: completes the vanilla smoking cycle and releases the product.
+src/Components/AutoGeoTuner.cs (ISim1000ms)
+  GeoTuner: reads private research state, aborts the switch-geyser chore,
+  auto switches geyser, auto completes research, checks tuning material.
+src/Components/AutoOilWellCap.cs (ISim1000ms)
+  Oil Well: auto depressurise/vent when vanilla conditions allow.
+src/Components/AutoOilRefinery.cs (ISim200ms)
+  Oil Refinery: keeps the state machine in the working state, drives the
+  Operational active flag; ratio itself is applied at prefab injection.
+src/Components/AutoMissionControlController.cs
+  Mission Control: accumulates work time (fallback 90 s), finds a boostable
+  rocket, applies the vanilla boost, resets.
+src/Components/AutoTinkerStationController.cs
+  Farm Station / Spice Grinder shell: skill override, material check, product
+  demand check (IgnoreCropDemand option), Produce/Abort/status item.
+  NOTE: Spice Grinder needs its OWN controller in 2.4.1 (see 2.1).
+src/Components/AutoResearchController.cs
+  Research buildings: cancels the pending Duplicant chore, drives research at
+  BaseWorkSpeed while inputs/power are available.
+src/Components/AutoValveController.cs
+  Liquid/Gas valve: applies the requested flow value without a Duplicant.
+src/Components/AutoRanchStation.cs
+  Ranching: serial invite queue (one critter at a time, timeout), work timer,
+  cooldown, station + critter animations, grooming/shearing/milking.
+src/Components/AutoStorageReleaseController.cs
+  Generic "empty the building" driver: caches input storages (so inputs are
+  never dropped), 1 s cooldown, ShouldRelease() gating, delegates first to
+  VanillaEmptyPaths.TryRelease and then to HardThresholdRelease.
+src/Components/VanillaEmptyPaths.cs
+  TryRelease(go)               – prefer the vanilla empty path per building.
+  ReleaseIceKettle / ReleaseDesalinator – state-machine-correct release
+                                 (Ice Kettle only when full; bottled liquid).
+  CompleteEmptyWorkable        – finish the vanilla empty workable so the state
+                                 machine transitions properly.
+  DropStoredItems / RestoreDroppedInteractions.
+src/Components/HardThresholdRelease.cs
+  Fallback drops when the vanilla path does not fire:
+  TryReleaseDesalinator (salt at 90 % fill), TryReleaseMilkSeparator
+  (Caviar / Brackwax at 90 % of solid capacity), Force* variants,
+  StoredSolidMass / DropRemainingSolids / IsSolid / DropTagged.
+
+[PATCHES]
+src/Patches/BuildingPrefabInjection.cs   (the wiring hub)
+  Postfix on GeneratedBuildings.LoadGeneratedBuildings -> Inject():
+  resolves each registry entry's prefab, attaches the right controller
+  (AttachController / Ensure<T> / Attach<T>), injects valves, specialised
+  controllers, research delivery (InjectResearchDelivery — the blanket
+  ResearchFetch->MachineFetch swap that 2.4.1 must narrow), and applies the
+  Oil Refinery 50/100 ratio (ApplyOilRefineryRatio, vanilla 5 kg/s + 0.09 kg/s).
+src/Patches/ComplexFabricatorPatches.cs
+  Prefix on ComplexFabricator.OnSpawn: set duplicantOperated=false when enabled.
+src/Patches/AutoWorkInjectionPatches.cs
+  StudyableAutomationPatch.Postfix(Studyable): geyser first-study automation.
+src/Patches/AutoEmptyTriggerPatches.cs
+  MilkSeparatorRequiresEmptyingPatch.Postfix – force-drop on emptying request.
+  DesalinatorCreateEmptyChorePatch.Prefix    – release instead of creating a
+                                               Duplicant empty chore.
+src/Patches/RanchCompletionGuard.cs
+  Install(prefabId, prefab)    – wrap ranch completion so effects apply without
+                                 a rancher; CompleteWithoutRancher, Groom, Shear
+                                 (aquatic variant handled), Milk, DropProduct.
+
+[CONFIG]
+src/Config/AutoMachineOptions.cs
+  PLib IOptions singleton. Categories: Fabricators / Special / Ranching /
+  Manual / Research / Room / General. Master EnableAllAutomation, BilingualLabels,
+  per-building Unmanned* bools, IgnoreRoom* overrides, IgnoreCropDemand,
+  SweeperResearchDelivery, RanchInterval, OilRefineryEfficiency, VerboseLogging,
+  UI language.
+src/Config/OilRefineryEfficiency.cs – enum Vanilla50 / Full100.
+src/Config/UiLanguage.cs            – enum Auto/English/zh-CN/zh-TW/ko/ja.
+
+[LOCALIZATION]
+src/Localization/ModStrings.cs           – STRINGS tree (CATEGORY/OPTION/TOOLTIP).
+src/Localization/Translations.cs         – option/tooltip dictionaries per language.
+src/Localization/VanillaBuildingNames.generated.cs – vanilla building names per
+                                           language, generated by tools/.
+src/Localization/BuildingDescriptions.cs – per-building descriptions + JP names.
+src/Localization/BuildingNameBinder.cs   – maps option keys to prefab ids, builds
+                                           bilingual titles, room/skill suffixes,
+                                           strips kanim markup.
+src/Localization/OptionTextBinder.cs     – writes final option titles/tooltips
+                                           (Combine english+translated, 64-char
+                                           trim), Resolve()/GameRunsIn() locale.
+src/Localization/OptionsScreenRefresher.cs – reopen the options dialog so a
+                                           language switch applies immediately.
+src/Localization/LocalizationAudit.cs    – dev-time audit: missing keys, foreign
+                                           script leakage, registry coverage.
+
+[UTIL]
+src/Util/Log.cs             – Info/Warn/Verbose(gated by option)/Error, prefixed.
+src/Util/SafeInvoke.cs      – Try(context, action) wrapper with logging.
+src/Util/StateMachineUtil.cs– reflection helpers: Field/SetField/BoolField/Call/
+                              CallBool, IsInState, CurrentState, GoTo, StateAt,
+                              AnyInstance, InstanceOf(declaringTypeName).
+src/Util/WorkAnim.cs        – PlayWorking / PlayIdle / PlayFirst over candidate
+                              anim name lists; ControllerOf(GameObject).
+
+--------------------------------------------------------------------------------
+4. PRACTICAL NOTES FOR THE NEXT AI
+--------------------------------------------------------------------------------
+- Always resolve DLC-only types by NAME (TypeResolver-style / ConfigTypeName in
+  AutomationRegistry). A missing type must be a silent skip, never an exception.
+- Prefer vanilla state machines and vanilla completion paths over manual
+  Storage.Drop; the hard-threshold code exists only as a last-resort fallback and
+  historically caused item loss when used first.
+- Reflection field/method names were verified against U59 assemblies in
+  toolchain/Managed (excluded from the source zip for licensing reasons —
+  re-copy them from OxygenNotIncluded_Data/Managed before building).
+- Build: ./build.sh (dotnet build + ILRepack merge of PLib) -> dist/.
+- Regression risks that bit us before: dropping input materials (Gleaner /
+  Desalinator), Ice Kettle flooding the floor, shearing-station pathing loops,
+  raw string keys shown in the options UI, and the mods screen losing the
+  Options button when PLib was not merged.
+================================================================================

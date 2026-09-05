@@ -1,0 +1,6 @@
+staticID: AutomaticIndustry
+title: Automatic Industry
+description: >-
+  Industrial buildings keep running without Duplicants, as long as their
+  vanilla requirements (power, ingredients, room, pressure) are satisfied.
+  Every building can be enabled or disabled individually in the mod options.

@@ -1,0 +1,23 @@
+# Builds the mod. The Oxygen Not Included managed assemblies are not
+# redistributable, so provide them through a self-hosted runner or a cached
+# artifact and point ONI_MANAGED at the folder.
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Mono
+        run: sudo apt-get update && sudo apt-get install -y mono-devel
+      - name: Build
+        if: ${{ env.ONI_MANAGED != '' }}
+        env:
+          ONI_MANAGED: ${{ vars.ONI_MANAGED }}
+          PLIB: ${{ vars.PLIB }}
+        run: ./build.sh
