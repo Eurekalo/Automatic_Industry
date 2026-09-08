@@ -69,7 +69,7 @@ namespace AutoMachineRebuilt.Integration
                 object metaObj = Activator.CreateInstance(metadataType);
                 SetProperty(metaObj, "StaticId", "AutomaticIndustry");
                 SetProperty(metaObj, "DisplayName", "Automatic Industry");
-                SetProperty(metaObj, "Version", "2.4.30");
+                SetProperty(metaObj, "Version", "2.4.35");
                 SetProperty(metaObj, "Description", "Automates industrial and utility buildings in Oxygen Not Included.");
                 SetProperty(metaObj, "Author", "AutoMachine Rebuilt contributors");
                 SetProperty(metaObj, "IsEnabled", true);

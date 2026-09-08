@@ -104,8 +104,16 @@ namespace AutoMachineRebuilt.Patches
             }
         }
 
+        private static bool? isModMenuActiveCache;
+        private static readonly Dictionary<Assembly, string> AssemblyModNameCache = new Dictionary<Assembly, string>();
+
         private static bool IsModMenuActive()
         {
+            if (isModMenuActiveCache.HasValue)
+            {
+                return isModMenuActiveCache.Value;
+            }
+
             try
             {
                 var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -113,6 +121,7 @@ namespace AutoMachineRebuilt.Patches
                 {
                     if (assemblies[i].GetName().Name.Equals("ModMenu", StringComparison.OrdinalIgnoreCase))
                     {
+                        isModMenuActiveCache = true;
                         return true;
                     }
                 }
@@ -120,6 +129,8 @@ namespace AutoMachineRebuilt.Patches
             catch
             {
             }
+
+            isModMenuActiveCache = false;
             return false;
         }
 
@@ -142,6 +153,14 @@ namespace AutoMachineRebuilt.Patches
 
         private static string ResolveModName(Assembly assembly)
         {
+            if (assembly == null) return string.Empty;
+
+            if (AssemblyModNameCache.TryGetValue(assembly, out string cachedName))
+            {
+                return cachedName;
+            }
+
+            string resolvedName = null;
             try
             {
                 if (Global.Instance != null && Global.Instance.modManager != null && Global.Instance.modManager.mods != null)
@@ -152,7 +171,8 @@ namespace AutoMachineRebuilt.Patches
                         {
                             if (mod.loaded_mod_data.dlls.Contains(assembly))
                             {
-                                return !string.IsNullOrEmpty(mod.title) ? mod.title : (!string.IsNullOrEmpty(mod.label.title) ? mod.label.title : mod.label.id);
+                                resolvedName = !string.IsNullOrEmpty(mod.title) ? mod.title : (!string.IsNullOrEmpty(mod.label.title) ? mod.label.title : mod.label.id);
+                                break;
                             }
                         }
                     }
@@ -162,7 +182,13 @@ namespace AutoMachineRebuilt.Patches
             {
             }
 
-            return assembly.GetName().Name;
+            if (string.IsNullOrEmpty(resolvedName))
+            {
+                resolvedName = assembly.GetName().Name;
+            }
+
+            AssemblyModNameCache[assembly] = resolvedName;
+            return resolvedName;
         }
 
         private static string GetModSourceTag(string modName)

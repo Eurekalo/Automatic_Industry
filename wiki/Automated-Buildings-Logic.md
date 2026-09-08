@@ -377,3 +377,12 @@ This document is the definitive technical reference for every automated building
 2. **Automated Harvesting**:
    - When plant maturity reaches 100%, triggers crop harvest without Duplicant farmer errand.
    - Drops food and seeds directly into the sweep area for Conveyor Loader delivery.
+3. **Robotic Worker Safety & Animation Override Guard**:
+   - Under third-party delivery mods (e.g. *No Manual Delivery*), Auto-Sweepers execute item pickup and transfer errands.
+   - Vanilla `StandardWorker.AttachOverrideAnims` attempts to bind Duplicant multi-tool animation symbols to the sweeper's `KAnimControllerBase`. Because sweepers lack a `SymbolOverrideController`, this throws an engine assert crash:
+     ```
+     Assert failed: Anim overrides containing additional symbols require a symbol override controller.
+     ```
+   - **`StandardWorkerAttachOverrideAnimsPatch`** suppresses attaching override animations whenever `worker.UsesMultiTool() == false` or the worker lacks `SymbolOverrideController`.
+   - **`BuildingPrefabInjection`** attaches `SymbolOverrideController` to `SolidTransferArm` completed prefabs on spawn, guaranteeing dual-layer stability across all automated logistics mods.
+

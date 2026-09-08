@@ -7,10 +7,6 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-if (-not $Token) {
-    $Token = Read-Host "Enter your GitHub Personal Access Token (or set `$env:GITHUB_TOKEN)"
-}
-
 $WorkspaceRoot = Resolve-Path "$PSScriptRoot\..\.."
 $WikiSource = Join-Path $WorkspaceRoot "wiki"
 $TempWikiDir = Join-Path $env:TEMP ("Automatic_Industry_wiki_" + [System.Guid]::NewGuid().ToString("N"))
@@ -22,7 +18,11 @@ if (-not (Test-Path $WikiSource)) {
     Write-Error "Wiki source directory '$WikiSource' does not exist!"
 }
 
-$RemoteUrl = "https://$($Token)@$RepoUrl"
+if ($Token) {
+    $RemoteUrl = "https://$($Token)@$RepoUrl"
+} else {
+    $RemoteUrl = "https://$RepoUrl"
+}
 
 try {
     Write-Host "Cloning wiki git repository..." -ForegroundColor Yellow
@@ -50,7 +50,7 @@ try {
         if (-not $status) {
             Write-Host "No changes to commit. Wiki is already up-to-date!" -ForegroundColor Green
         } else {
-            git commit -m "Update wiki documentation for automated buildings logic and architecture"
+            git commit -m "docs(wiki): update automated buildings logic and expand multi-mod compatibility documentation"
             Write-Host "Pushing changes to GitHub Wiki..." -ForegroundColor Yellow
             git push origin HEAD
             Write-Host "Successfully synchronized wiki to GitHub!" -ForegroundColor Green

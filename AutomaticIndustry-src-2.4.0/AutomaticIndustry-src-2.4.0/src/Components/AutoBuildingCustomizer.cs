@@ -784,6 +784,14 @@ namespace AutoMachineRebuilt.Components
             CancelChore();
             Unsubscribe(493375141, OnRefreshUserMenuDelegate);
             Unsubscribe(-905833192, OnCopySettingsDelegate);
+
+            // Clean up registry override on in-game deconstruction, but preserve when saving/exiting
+            if (!App.IsExiting && !KMonoBehaviour.isLoadingScene)
+            {
+                int cell = Grid.PosToCell(this);
+                ColonyAutomationMasterRegistry.Instance?.RemoveOverride(cell);
+            }
+
             base.OnCleanUp();
         }
     }

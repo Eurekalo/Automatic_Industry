@@ -73,6 +73,26 @@ namespace AutoMachineRebuilt.Patches
         }
 
         /// <summary>
+        /// Context tracker marking when FindFetchTarget is being executed for an Auto-Sweeper.
+        /// </summary>
+        [HarmonyPatch(typeof(SolidTransferArm), "FindFetchTarget")]
+        internal static class SolidTransferArm_FindFetchTarget_Patch
+        {
+            [ThreadStatic]
+            internal static bool IsInsideArmFetch;
+
+            public static void Prefix()
+            {
+                IsInsideArmFetch = true;
+            }
+
+            public static void Postfix()
+            {
+                IsInsideArmFetch = false;
+            }
+        }
+
+        /// <summary>
         /// Filters fetch errands from Liquid Reservoir: properly distinguishes Duplicant errands
         /// and Auto-Sweeper errands (including with Zoned Solid Transfer Arm).
         /// </summary>
@@ -97,8 +117,9 @@ namespace AutoMachineRebuilt.Patches
                     }
 
                     // Differentiate between Duplicant fetch and Auto-Sweeper fetch
-                    bool isSweeper = (chore != null && chore.driver != null && chore.driver.GetComponent<SolidTransferArm>() != null);
-                    bool isDupe = (chore != null && chore.driver != null && chore.driver.GetComponent<MinionIdentity>() != null);
+                    bool isSweeper = SolidTransferArm_FindFetchTarget_Patch.IsInsideArmFetch ||
+                                     (chore != null && chore.driver != null && chore.driver.GetComponent<SolidTransferArm>() != null);
+                    bool isDupe = !isSweeper;
 
                     if (isSweeper && !options.LiquidReservoirAutoSweeperFetch)
                     {
@@ -106,11 +127,6 @@ namespace AutoMachineRebuilt.Patches
                     }
                     else if (isDupe && !options.LiquidReservoirDuplicantFetch)
                     {
-                        __result = false;
-                    }
-                    else if (!isSweeper && !isDupe && !options.LiquidReservoirDuplicantFetch)
-                    {
-                        // Background Duplicant chore generation
                         __result = false;
                     }
                 }

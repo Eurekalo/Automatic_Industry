@@ -1,3 +1,28 @@
+## 2.4.35
+
+- **Comprehensive Code Audit & Runtime Robustness Hardening (模组核心代码安全与稳健性审计修复)**:
+  - **Case-Insensitive Prefab Lookup in AutoMachineOptions**:
+    - Replaced case-sensitive dictionary instantiation in `ToggleByPrefabId` with `new Dictionary<string, Func<AutoMachineOptions, bool>>(StringComparer.OrdinalIgnoreCase)`.
+    - Deduplicated canonical PascalCase keys (e.g. `AlgaeTerrarium`, `CO2Scrubber`, `Desalinator`, `Electrolyzer`, `OilRefinery`, `Polymerizer`, `WaterPurifier`, etc.) to prevent duplicate key `ArgumentException`, ensuring robust configuration lookups regardless of identifier casing.
+  - **Deconstruction Footprint Cache Cleanup in AutoBuildingCustomizer**:
+    - Enhanced `AutoBuildingCustomizer.OnCleanUp()` to unregister and purge cached building footprint cell mappings from `CustomizersByCell` upon deconstruction.
+    - Guarded cleanup with `!App.IsExiting && !KMonoBehaviour.isLoadingScene` to avoid redundant state manipulation during scene teardown and eliminate memory leaks over long colony lifecycles.
+  - **AutoManualGenerator Battery State Synchronization**:
+    - Refactored `AutoManualGeneratorController` battery query logic to discover connected batteries via `ICircuitConnected` on `Generator` instead of directly searching local components.
+    - Accurately respects power network battery capacities and user-configured charge thresholds (refill threshold vs. full threshold), eliminating chore thrashing and task oscillation.
+  - **LiquidReservoir Sweeper vs. Duplicant Disambiguation**:
+    - In `LiquidReservoirFetchPatches`, integrated `SolidTransferArm_FindFetchTarget_Patch.IsInsideArmFetch` thread-local state to cleanly distinguish Auto-Sweepers (`SolidTransferArm`) from Duplicant deliveries.
+    - Sweepers can smoothly deliver bottled liquids to liquid reservoirs without interfering with Duplicant manual delivery errands.
+  - **Option Guards for AutoEmptyTriggerPatches**:
+    - Wrapped `AssetsIsTagSolidTransferArmConveyablePatch` with option checks so transfer arm conveyability patches only activate when auto empty / bottle sweep features are enabled.
+  - **PLib OptionsDialog Layout Fix & Mod Load Safety**:
+    - Fixed critical startup `HarmonyException` ("Parameter optionsDialog not found") by aligning postfix parameter name with `OptionsDialog.AddModInfoScreen(PDialog dialog)`.
+    - Converted `OptionsDialogLayoutFixPatch` from auto-discovery to defensive manual registration inside `OnLoad()`, guaranteeing that upstream PLib changes will never prevent Automatic Industry from initializing.
+  - **No Manual Delivery & SolidTransferArm Anim Override Assert Fix**:
+    - Resolved `Assert failed: Anim overrides containing additional symbols require a symbol override controller` during robotic arm pickup errands (`FetchAreaChore` / `DoPickup`).
+    - Added `StandardWorkerAttachOverrideAnimsPatch` to suppress duplicant animation overrides on workers lacking a `SymbolOverrideController` or with `UsesMultiTool == false`.
+    - Proactively attached `SymbolOverrideController` to `SolidTransferArm` completed prefabs in `BuildingPrefabInjection`, ensuring dual-layer resilience across third-party fetch mods.
+
 ## 2.4.34
 
 - **Customize Buildings Mod Compatibility (与 Customize Buildings 模组崩溃与冲突兼容性修复)**:

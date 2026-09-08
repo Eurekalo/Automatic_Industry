@@ -394,6 +394,15 @@ namespace AutoMachineRebuilt.Patches
                     return;
                 }
 
+                var options = AutoMachineOptions.Instance;
+                if (options != null && !options.EnableAllAutomation &&
+                    !options.UnmannedAdvancedResearchCenter &&
+                    !options.UnmannedNuclearResearchCenter &&
+                    !options.LiquidReservoirAutoSweeperFetch)
+                {
+                    return;
+                }
+
                 if (NonConveyableTags.Contains(tag))
                 {
                     return;

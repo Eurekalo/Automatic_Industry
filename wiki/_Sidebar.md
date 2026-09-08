@@ -17,3 +17,15 @@
   - [Chore Suppression System](Architecture-and-Design#-4-chore-suppression-system)
   - [Circuit Breaker](Architecture-and-Design#-5-circuit-breaker-safeinvoke--controller-lifecycle)
   - [Mod Compatibility Shims](Architecture-and-Design#-6-mod-compatibility-shims)
+- **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
+  - [No Manual Delivery](Multi-Mod-Compatibility-and-Crash-Guards#1-no-manual-delivery-steam-id-2047308624)
+  - [PLib OptionsDialog](Multi-Mod-Compatibility-and-Crash-Guards#2-plib-ui-layout--options-dialog-resilience)
+  - [Customize Buildings](Multi-Mod-Compatibility-and-Crash-Guards#3-customize-buildings-steam-id-1818138009)
+  - [I_实用系统](Multi-Mod-Compatibility-and-Crash-Guards#4-i_实用系统-practical-systems-steam-id-3300147615)
+  - [Multithreaded Simulation](Multi-Mod-Compatibility-and-Crash-Guards#5-multithreaded-simulation-simdll_rust)
+  - [EmptyStorage](Multi-Mod-Compatibility-and-Crash-Guards#6-emptystorage-steam-id-1748202748)
+  - [Adjustable & Zoned Sweeper](Multi-Mod-Compatibility-and-Crash-Guards#7-adjustable-transfer-arm--zoned-solid-transfer-arm)
+  - [Mod Menu (v1.4.9)](Multi-Mod-Compatibility-and-Crash-Guards#8-mod-menu-v149--in-game-pause-screen-integration)
+  - [FastTrack](Multi-Mod-Compatibility-and-Crash-Guards#9-fasttrack-engine-optimization)
+  - [ONI Together](Multi-Mod-Compatibility-and-Crash-Guards#10-oni-together-multiplayer)
+

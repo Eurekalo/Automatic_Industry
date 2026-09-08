@@ -13,7 +13,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>2.4.34</Version>
+    <Version>2.4.35</Version>
     <Authors>AutoMachine Rebuilt contributors; original AutoMachine author</Authors>
     <Copyright>MIT License</Copyright>
     <ONIManaged Condition="'$(ONIManaged)' == ''">$(ONI_MANAGED)</ONIManaged>

@@ -36,7 +36,7 @@ namespace AutoMachineRebuilt.Components
             ChoreSuppression.CancelOperateChores(gameObject);
         }
 
-        /// <summary>Starts or stops the wheel following the vanilla chore.</summary>
+        /// <summary>Starts or stops the wheel following the circuit battery state and refill threshold.</summary>
         /// <param name="dt">Seconds since the previous step.</param>
         protected override void Step(float dt)
         {
@@ -45,10 +45,10 @@ namespace AutoMachineRebuilt.Components
                 return;
             }
 
+            // Suppress duplicant operate chores while automation is active
             ChoreSuppression.CancelOperateChores(gameObject);
 
-            bool wanted = IsOperational() &&
-                          StateMachineUtil.Field(generator, "chore") != null;
+            bool wanted = ShouldGeneratePower();
 
             if (wanted == driving)
             {
@@ -58,6 +58,47 @@ namespace AutoMachineRebuilt.Components
             driving = wanted;
             SetActive(wanted);
             Log.Verbose((wanted ? "Started" : "Stopped") + " automated power generation on " + optionKey);
+        }
+
+        private bool ShouldGeneratePower()
+        {
+            if (generator == null || !IsOperational())
+            {
+                return false;
+            }
+
+            if (Game.Instance == null || Game.Instance.circuitManager == null)
+            {
+                return false;
+            }
+
+            CircuitManager circuitManager = Game.Instance.circuitManager;
+            Generator gen = generator.GetComponent<Generator>();
+            if (gen == null)
+            {
+                return false;
+            }
+
+            ushort circuitID = circuitManager.GetCircuitID(gen);
+            bool hasBatteries = circuitManager.HasBatteries(circuitID);
+
+            if (driving)
+            {
+                // Matches vanilla ManualGenerator.OnWorkTick: run until batteries are 100% full (or consumers active if no batteries)
+                return (hasBatteries && circuitManager.GetMinBatteryPercentFullOnCircuit(circuitID) < 1f)
+                    || (!hasBatteries && circuitManager.HasConsumers(circuitID));
+            }
+            else
+            {
+                // Matches vanilla ManualGenerator.EnergySim200ms: start when battery charge drops below the slider threshold
+                float refillPercent = generator.GetSliderValue(0) / 100f;
+                if (hasBatteries)
+                {
+                    float minPercent = circuitManager.GetMinBatteryPercentFullOnCircuit(circuitID);
+                    return refillPercent <= 0f ? minPercent <= 0f : minPercent < refillPercent;
+                }
+                return circuitManager.HasConsumers(circuitID);
+            }
         }
 
         /// <summary>Hands the wheel back to the base game.</summary>

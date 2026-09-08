@@ -60,6 +60,10 @@ namespace AutoMachineRebuilt
             {
                 CustomizeBuildingsCompatibility.Apply(harmony);
             });
+            SafeInvoke.Try("OptionsDialog layout fix patch (OnLoad)", delegate
+            {
+                OptionsDialogLayoutFixPatch.Apply(harmony);
+            });
 
             Log.Info("Loaded. Automation options can be changed in the mod settings.");
         }

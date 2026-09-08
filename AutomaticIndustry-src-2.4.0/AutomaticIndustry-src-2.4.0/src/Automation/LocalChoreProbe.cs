@@ -45,6 +45,11 @@ namespace AutoMachineRebuilt.Automation
         private const BindingFlags InstanceFields =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        /// <summary>Reusable list for zero-allocation component queries on Unity main thread.</summary>
+        private static readonly List<Component> ReusableComponents = new List<Component>(32);
+        private static readonly List<StateMachine.Instance> ReusableSmis = new List<StateMachine.Instance>(16);
+        private static readonly List<Chore> ReusableChoresToCancel = new List<Chore>(8);
+
         /// <summary>
         /// Returns the workable of the work chore currently offered by
         /// <paramref name="building"/>, or <c>null</c> when the building has
@@ -66,10 +71,11 @@ namespace AutoMachineRebuilt.Automation
         /// <param name="building">Building game object to inspect.</param>
         private static Workable ScanComponents(GameObject building)
         {
-            Component[] components = building.GetComponents<Component>();
-            for (int i = 0; i < components.Length; i++)
+            ReusableComponents.Clear();
+            building.GetComponents(ReusableComponents);
+            for (int i = 0; i < ReusableComponents.Count; i++)
             {
-                Component component = components[i];
+                Component component = ReusableComponents[i];
                 if (component == null)
                 {
                     continue;
@@ -81,11 +87,13 @@ namespace AutoMachineRebuilt.Automation
                     Workable workable = Accept(fields[f].GetValue(component) as Chore, building);
                     if (workable != null)
                     {
+                        ReusableComponents.Clear();
                         return workable;
                     }
                 }
             }
 
+            ReusableComponents.Clear();
             return null;
         }
 
@@ -187,13 +195,14 @@ namespace AutoMachineRebuilt.Automation
                 return;
             }
 
-            List<Chore> toCancel = null;
+            ReusableChoresToCancel.Clear();
 
             // 1. Scan component fields
-            Component[] components = building.GetComponents<Component>();
-            for (int i = 0; i < components.Length; i++)
+            ReusableComponents.Clear();
+            building.GetComponents(ReusableComponents);
+            for (int i = 0; i < ReusableComponents.Count; i++)
             {
-                Component component = components[i];
+                Component component = ReusableComponents[i];
                 if (component == null)
                 {
                     continue;
@@ -206,36 +215,32 @@ namespace AutoMachineRebuilt.Automation
                     if (chore != null && !chore.isComplete && chore.choreType != null &&
                         operateChoreIds.Contains(chore.choreType.Id))
                     {
-                        if (toCancel == null)
+                        if (!ReusableChoresToCancel.Contains(chore))
                         {
-                            toCancel = new List<Chore>();
-                        }
-
-                        if (!toCancel.Contains(chore))
-                        {
-                            toCancel.Add(chore);
+                            ReusableChoresToCancel.Add(chore);
                         }
                     }
                 }
             }
+            ReusableComponents.Clear();
 
             // 2. Scan state machine data tables
             StateMachineController controller = building.GetComponent<StateMachineController>();
             if (controller != null)
             {
                 // Snapshot the state machine instances to avoid concurrent modification issues
-                List<StateMachine.Instance> smis = new List<StateMachine.Instance>();
+                ReusableSmis.Clear();
                 foreach (StateMachine.Instance smi in controller)
                 {
                     if (smi != null)
                     {
-                        smis.Add(smi);
+                        ReusableSmis.Add(smi);
                     }
                 }
 
-                for (int s = 0; s < smis.Count; s++)
+                for (int s = 0; s < ReusableSmis.Count; s++)
                 {
-                    StateMachine.Instance smi = smis[s];
+                    StateMachine.Instance smi = ReusableSmis[s];
                     if (smi == null || smi.dataTable == null)
                     {
                         continue;
@@ -248,32 +253,26 @@ namespace AutoMachineRebuilt.Automation
                         if (chore != null && !chore.isComplete && chore.choreType != null &&
                             operateChoreIds.Contains(chore.choreType.Id))
                         {
-                            if (toCancel == null)
+                            if (!ReusableChoresToCancel.Contains(chore))
                             {
-                                toCancel = new List<Chore>();
-                            }
-
-                            if (!toCancel.Contains(chore))
-                            {
-                                toCancel.Add(chore);
+                                ReusableChoresToCancel.Add(chore);
                             }
                         }
                     }
                 }
+                ReusableSmis.Clear();
             }
 
             // 3. Cancel all gathered operate chores
-            if (toCancel != null)
+            for (int i = 0; i < ReusableChoresToCancel.Count; i++)
             {
-                for (int i = 0; i < toCancel.Count; i++)
+                Chore chore = ReusableChoresToCancel[i];
+                if (chore != null && !chore.isComplete)
                 {
-                    Chore chore = toCancel[i];
-                    if (chore != null && !chore.isComplete)
-                    {
-                        chore.Cancel("Automated by AutoMachine Rebuilt");
-                    }
+                    chore.Cancel("Automated by AutoMachine Rebuilt");
                 }
             }
+            ReusableChoresToCancel.Clear();
         }
     }
 }

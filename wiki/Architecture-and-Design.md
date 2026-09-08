@@ -138,8 +138,15 @@ Automatic Industry includes dedicated compatibility layers for popular ONI mods:
 | Mod | Compatibility Challenge | Automatic Industry Solution |
 | :--- | :--- | :--- |
 | **Customize Buildings** | Changes storage sizes, element converter rates, and refinery internal logic. | `CustomizeBuildingsCompatibility.Apply()` verifies refinery ratios dynamically and synchronizes converter outputs without overwriting custom capacities. |
-| **No Manual Delivery** | Disables Duplicant manual delivery to automated machines. | `NoManualDeliveryCompatibility.cs` falls back cleanly to `MinionGroupProber` to verify reachability without throwing missing prober exceptions. |
+| **No Manual Delivery** | Disables manual delivery and redirects fetch errands to Auto-Sweepers (`SolidTransferArm`). | `NoManualDeliveryCompatibility.cs` provides dual-tier fallback probers, and `StandardWorkerAttachOverrideAnimsPatch` suppresses duplicant animation override assertions on robotic arms. |
+| **PLib Mod Options** | Dynamic layout collapse and upstream parameter variations (`dialog` vs `optionsDialog`). | `OptionsDialogLayoutFixPatch.cs` enforces 1020x720 layout and applies safely via `SafeInvoke.Try` in `OnLoad()`. |
+| **I_实用系统** | Utility logic gates and sensor networks. | Clean operational event hooks (`GameHashes.OperationalChanged`) without logic port collisions. |
+| **Multithreaded Simulation** | Multithreaded physics/element simulation (`SimDLL_Rust`). | Main-thread cadence execution (`ISim200ms`, `ISim1000ms`) with zero-allocation state reads. |
 | **EmptyStorage** | Third-party mod adding manual drop buttons to storage. | `VanillaEmptyPaths.cs` checks and marks dropped items, restoring interaction tables and preventing double-dropping or item deletion. |
-| **Adjustable Transfer Arm & Zoned Arm** | Expands or offsets the sweep and reach area of Auto-Sweepers. | `AutoSweeperHarvestController.cs` reads the dynamic grid boundaries rather than hardcoded 4-cell radii, allowing harvesting anywhere the custom arm can reach. |
+| **Adjustable Transfer Arm & Zoned Arm** | Expands or offsets the sweep and reach area of Auto-Sweepers. | `AutoSweeperHarvestController.cs` reads dynamic grid boundaries and zone filters rather than hardcoded 4-cell radii. |
+| **Mod Menu (v1.4.9)** | In-game pause menu mod management and configuration. | Multilingual Options button locator (`OnOptions` delegate matching) positioning Mod Menu directly below Options across all languages. |
 | **FastTrack** | Heavily optimizes game loops and skips redundant GameObject component lookups. | Controllers cache references during `Prepare()` and avoid reflective searches during high-frequency simulation ticks. |
-| **ONI Together (Multiplayer)** | Synchronizes game state over network packets. | All state changes rely on standard game events (`Trigger`, `Operational.SetActive`), ensuring deterministic state propagation across clients. |
+| **ONI Together (Multiplayer)** | Synchronizes game state over network packets. | Deterministic state transitions synchronized via `BuildingAutomationSyncPacket`. |
+
+> [!TIP]
+> For in-depth code implementations, stack traces, and crash mitigation strategies, see **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**.

@@ -16,7 +16,9 @@ This wiki documents the engineering internals, code functions, state machine int
    - `BuildingPrefabInjection` scan pipeline.
    - `AutoBuildingCustomizer` per-building independent toggle and wrench errand dispatch.
    - `ChoreSuppression` zero-allocation Duplicant chore cancellation.
-   - Compatibility shims (*No Manual Delivery*, *Customize Buildings*, *EmptyStorage*, *Adjustable Transfer Arm*, *ONI Together*).
+3. **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
+   - Compatibility layers for *No Manual Delivery*, *PLib*, *Customize Buildings*, *I_实用系统*, *Multithreaded Simulation (SimDLL_Rust)*, *EmptyStorage*, *Adjustable Transfer Arm*, *Mod Menu*, and *ONI Together*.
+   - Proactive `SymbolOverrideController` injection, animation override suppression on robotic workers, and prober fallbacks.
 
 ---
 

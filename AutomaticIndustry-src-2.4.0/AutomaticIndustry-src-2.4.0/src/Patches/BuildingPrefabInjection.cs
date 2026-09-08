@@ -137,6 +137,7 @@ namespace AutoMachineRebuilt.Patches
             if (prefab.GetComponent<SolidTransferArm>() != null)
             {
                 Attach<AutoSweeperHarvestController>(prefab);
+                Attach<SymbolOverrideController>(prefab);
             }
 
             switch (prefabId)
@@ -504,6 +505,7 @@ namespace AutoMachineRebuilt.Patches
             if (__instance != null && __instance.gameObject != null)
             {
                 __instance.gameObject.AddOrGet<AutoSweeperHarvestController>();
+                __instance.gameObject.AddOrGet<SymbolOverrideController>();
             }
         }
     }

@@ -197,6 +197,15 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
+- **v2.4.35**:
+  - PLib `OptionsDialog` parameter binding alignment (`PDialog dialog`) and load crash prevention via safe manual patch hook.
+  - Multi-mod compatibility fix for **No Manual Delivery** (`SolidTransferArm` animation override assertion suppression via `StandardWorkerAttachOverrideAnimsPatch`).
+  - Proactive `SymbolOverrideController` injection on `SolidTransferArm` completed prefabs.
+  - Case-insensitive prefab lookup in `AutoMachineOptions` with deduplicated dictionary keys.
+  - Deconstructed building footprint cell deregistration in `AutoBuildingCustomizer.OnCleanUp()`.
+  - Circuit-connected battery query in `AutoManualGeneratorController` resolving chore oscillation.
+  - Transfer arm vs Duplicant fetch disambiguation in `LiquidReservoirFetchPatches`.
+  - Zero-allocation candidate probe caching in `LocalChoreProbe`.
 - **v2.4.34**:
   - Full compatibility shim for **Customize Buildings** (Steam ID `1818138009`).
   - Switched `[MyCmpReq]` to `[MyCmpGet]` in `AutoOilRefinery` and `AutoOilWellCap` to prevent engine-level missing component errors.
@@ -231,7 +240,7 @@ dotnet build AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutoMachine
 dotnet run --project toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.4.34.ps1
+powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.4.35.ps1
 ```
 
 ---
