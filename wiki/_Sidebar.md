@@ -28,4 +28,17 @@
   - [Mod Menu (v1.4.9)](Multi-Mod-Compatibility-and-Crash-Guards#8-mod-menu-v149--in-game-pause-screen-integration)
   - [FastTrack](Multi-Mod-Compatibility-and-Crash-Guards#9-fasttrack-engine-optimization)
   - [ONI Together](Multi-Mod-Compatibility-and-Crash-Guards#10-oni-together-multiplayer)
+- **[Compatible Mods Roster](Compatible-Mods)**
+  - [Multithreaded Sim](Compatible-Mods#1-多线程模拟-multithreaded-simulation-rc-26)
+  - [FastTrack](Compatible-Mods#2-fasttrack)
+  - [ModMenu](Compatible-Mods#3-modmenu)
+  - [Ronivan's Legacy](Compatible-Mods#4-ronivans-legacy---industrial-revolution)
+  - [Auto Compost](Compatible-Mods#5-自动堆肥--auto-compost)
+  - [Empty Storage](Compatible-Mods#6-empty-storage)
+  - [Zoned Auto Sweeper](Compatible-Mods#7-zoned-auto-sweeper)
+  - [No Manual Delivery](Compatible-Mods#8-no-manual-delivery)
+- **[Incorporated Obsolete Mods](Incorporated-Features-from-Obsolete-Mods)**
+  - [Auto-Sweeper Harvest](Incorporated-Features-from-Obsolete-Mods#1-auto-sweeper-harvest)
+  - [Liquid Reservoir Boost](Incorporated-Features-from-Obsolete-Mods#2-liquid-reservoir-boost-储液库增强)
+
 

@@ -19,6 +19,10 @@ This wiki documents the engineering internals, code functions, state machine int
 3. **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
    - Compatibility layers for *No Manual Delivery*, *PLib*, *Customize Buildings*, *I_实用系统*, *Multithreaded Simulation (SimDLL_Rust)*, *EmptyStorage*, *Adjustable Transfer Arm*, *Mod Menu*, and *ONI Together*.
    - Proactive `SymbolOverrideController` injection, animation override suppression on robotic workers, and prober fallbacks.
+4. **[Compatible Mods Roster](Compatible-Mods)**
+   - Planned and verified compatible community mods (*Multithreaded Simulation*, *FastTrack*, *ModMenu*, *Ronivan's Legacy*, *Auto Compost*, *Empty Storage*, *Zoned Auto Sweeper*, *No Manual Delivery*).
+5. **[Incorporated Features from Obsolete Mods](Incorporated-Features-from-Obsolete-Mods)**
+   - Community mod concepts modernized, ported, and maintained (*Auto-Sweeper Harvest*, *Liquid Reservoir Boost*).
 
 ---
 
