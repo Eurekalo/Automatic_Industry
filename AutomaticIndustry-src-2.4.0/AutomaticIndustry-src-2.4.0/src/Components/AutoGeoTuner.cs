@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using System;
@@ -52,6 +52,7 @@ namespace AutoMachineRebuilt.Components
             {
                 optionKey = "GEOTUNER";
             }
+            AutoMachineRebuilt.Patches.GeoTunerSoundSafetyPatch.EnsureSoundPathsPopulated();
             base.Prepare();
             smi = gameObject.GetSMI<GeoTuner.Instance>();
         }

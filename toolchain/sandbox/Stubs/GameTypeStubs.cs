@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutomaticIndustry Sandbox. Stub types for offline testing.
+﻿// Copyright (c) 2026 AutomaticIndustry Sandbox. Stub types for offline testing.
 //
 // These stubs reproduce ONLY the signatures and minimal behaviour of the game types
 // that the AutomaticIndustry mod references. They are NOT complete implementations
@@ -499,6 +499,9 @@ public class UnderwaterShearingStaion : KMonoBehaviour
 // GeoTuner stubs
 public class GeoTuner : StateMachine
 {
+    public static string liquidGeyserTuningSoundPath;
+    public static string gasGeyserTuningSoundPath;
+    public static string metalGeyserTuningSoundPath;
     public class OperationalState : BaseState
     {
         public GeyserSelectedState geyserSelected;

@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using System;
@@ -137,7 +137,10 @@ namespace AutoMachineRebuilt.Patches
             if (prefab.GetComponent<SolidTransferArm>() != null)
             {
                 Attach<AutoSweeperHarvestController>(prefab);
-                Attach<SymbolOverrideController>(prefab);
+                if (prefab.GetComponent<SymbolOverrideController>() == null)
+                {
+                    SymbolOverrideControllerUtil.AddToPrefab(prefab);
+                }
             }
 
             switch (prefabId)
@@ -190,6 +193,7 @@ namespace AutoMachineRebuilt.Patches
                         geoTuner.Configure("GEOTUNER");
                         Attach<AutoBuildingCustomizer>(prefab);
                     }
+                    GeoTunerSoundSafetyPatch.EnsureSoundPathsPopulated();
                     break;
 
                 case "LiquidBottler":
@@ -505,7 +509,10 @@ namespace AutoMachineRebuilt.Patches
             if (__instance != null && __instance.gameObject != null)
             {
                 __instance.gameObject.AddOrGet<AutoSweeperHarvestController>();
-                __instance.gameObject.AddOrGet<SymbolOverrideController>();
+                if (__instance.gameObject.GetComponent<SymbolOverrideController>() == null)
+                {
+                    SymbolOverrideControllerUtil.AddToPrefab(__instance.gameObject);
+                }
             }
         }
     }

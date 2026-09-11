@@ -1,3 +1,47 @@
+## 2.4.39
+
+- **GeoTuner Premature Class Constructor Sound NRE Fix & Auto-Healing (地热调谐器静态构造函数提前求值致空引用黑洞崩溃修复)**:
+  - **Black Hole Game Crash Elimination**:
+    - Fixed a fatal game-crashing Black Hole error (`NullReferenceException` inside `StateMachine.ExecuteActions` -> `GeoTuner.TriggerSoundsForGeyserChange` -> `SoundEvent.PlayOneShot` -> `FMODUnity.RuntimeManager.PathToGUID`) triggered when assigning or tuning geysers/volcanoes.
+    - **Root Cause**: During mod initialization (`OnLoad`), reflection inspection of `typeof(GeoTuner)` in station suppression patches prematurely triggered `GeoTuner`'s static constructor (`.cctor`) before `GlobalAssets` had loaded sound banks. Consequently, `liquidGeyserTuningSoundPath`, `gasGeyserTuningSoundPath`, and `metalGeyserTuningSoundPath` were permanently evaluated to `null`.
+  - **Dynamic Audio Auto-Healing & Defensive Prefix**:
+    - Implemented `GeoTunerSoundSafetyPatch`:
+      - `EnsureSoundPathsPopulated()` checks if static sound paths are null or empty, automatically querying `GlobalAssets.GetSound(...)` once sound assets are ready.
+      - Intercepts `GeoTuner.TriggerSoundsForGeyserChange` with a defensive Harmony prefix, guarding against null/empty event strings before passing to FMOD and returning `false` to skip vanilla's unguarded invocation.
+      - Proactively triggers `EnsureSoundPathsPopulated()` during `BuildingPrefabInjection` and `AutoGeoTuner.Prepare()`.
+  - **Project & Build Configurations**:
+    - Added `FMODUnity.dll` reference to `AutoMachineRebuilt.csproj`.
+  - **Sandbox Automated Verification**:
+    - Added Test #39 to `SandboxTests.cs` simulating premature static constructor wipeout, path auto-healing, and defensive null guards (246/246 tests passing).
+
+## 2.4.38
+
+- **SymbolOverrideController SaveLoad & Initialization Auto-Healing Safety (存档加载与实体反序列化符号覆盖控制器断言崩溃自愈修复)**:
+  - **Save Load & Deserialization Crash Prevention**:
+    - Fixed fatal assertion crashes during save game loading when Ronivan's mods (Metallurgy, Chemical Processing, Nuclear) or custom buildings are present:
+      `Assert failed: SymbolOverrideController requires usingNewSymbolOverrideSystem to be set to true.`
+    - Deserialized save entities or prefabs instantiated via `SaveLoadRoot.Load` had `usingNewSymbolOverrideSystem` default to `false` because the field is non-serialized. When `GameObject.SetActive(true)` triggers `Awake` -> `SymbolOverrideController.OnPrefabInit`, the assertion crashed under LogCatcher / FT.
+  - **Harmony Prefix Auto-Healing Layer (`SymbolOverrideControllerCompatibility`)**:
+    - Harmony Prefix on `SymbolOverrideController.OnPrefabInit` auto-heals `usingNewSymbolOverrideSystem = true` and verifies `KBatchedAnimController` before original assertions execute.
+    - Harmony Prefix on `SymbolOverrideControllerUtil.AddToPrefab` ensures `usingNewSymbolOverrideSystem = true` before `AddComponent` triggers `Awake()`.
+  - **Sandbox Automated Verification**:
+    - Added Test #38 simulating save/load deserialization and Ronivan building loading resilience (245/245 tests passing).
+
+## 2.4.37
+
+- **Chemical Processing In-Game Mod Config Safe UI Parenting (化工模组 BuildingEditor 窗口父级 NullReference 崩溃修复)**:
+  - **In-Game Dialog Parenting Resilience**:
+    - Fixed `NullReferenceException` when opening mod configuration dialogs (e.g., Chemical Processing BuildingEditor `ShowWindow`) while in-game or paused.
+    - When `FrontEndManager.Instance` is null during active simulation, safely resolved parenting to `GameScreenManager.Instance.ssOverlayCanvas` or `GetTargetWidget()`, preventing UI initialization failures.
+  - **Multilingual Community Text Pack Compatibility**:
+    - Verified Japanese / CJK community text pack formatting under NotoSansCJKjp-Regular.
+
+## 2.4.36
+
+- **ModMenu Direct Lifecycle & Snapshot Decoupling (ModMenu 原生生命周期解耦与无冲突配置)**:
+  - Decoupled mod enablement workflows from external JSON profile snapshots; mod activation and deactivation cleanly route through `KMod.Manager`.
+  - Eliminated mod disablement loops, restart wipeout prompts, and unnecessary profile synchronization overhead.
+
 ## 2.4.35
 
 - **Comprehensive Code Audit & Runtime Robustness Hardening (模组核心代码安全与稳健性审计修复)**:

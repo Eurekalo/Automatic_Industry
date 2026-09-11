@@ -15,9 +15,12 @@ This technical reference details the dedicated compatibility layers, runtime shi
 5. [Multithreaded Simulation (SimDLL_Rust / 3779276157)](#5-multithreaded-simulation-simdll_rust)
 6. [EmptyStorage (1748202748)](#6-emptystorage-steam-id-1748202748)
 7. [Adjustable Transfer Arm & Zoned Solid Transfer Arm](#7-adjustable-transfer-arm--zoned-solid-transfer-arm)
-8. [Mod Menu (v1.4.9) & In-Game Pause Screen](#8-mod-menu-v149--in-game-pause-screen-integration)
+8. [Mod Menu (v1.4.13) & In-Game Pause Screen](#8-mod-menu-v1413--in-game-pause-screen-integration)
 9. [FastTrack Engine Optimization](#9-fasttrack-engine-optimization)
 10. [ONI Together (Multiplayer)](#10-oni-together-multiplayer)
+11. [Chemical Processing & BuildingEditor Safe UI Parenting](#11-chemical-processing--buildingeditor-safe-ui-parenting)
+12. [SymbolOverrideController Deserialization & SaveLoad Auto-Healing](#12-symboloverridecontroller-deserialization--saveload-auto-healing)
+13. [GeoTuner Premature Class Constructor Sound Path Auto-Healing](#13-geotuner-premature-class-constructor-sound-path-auto-healing)
 
 ---
 
@@ -129,7 +132,7 @@ When customizing mod options, bilingual descriptions and localized strings can p
 
 ---
 
-## 8. Mod Menu (v1.4.9) & In-Game Pause Screen Integration
+## 8. Mod Menu (v1.4.13) & In-Game Pause Screen Integration
 
 ### Features:
 *Mod Menu* allows inspecting active mods and editing live options directly during gameplay.
@@ -156,3 +159,58 @@ When customizing mod options, bilingual descriptions and localized strings can p
 ### Integration:
 - Automated state transitions generate standard game events (`Trigger`, `Operational.SetActive`).
 - Multiplayer packet synchronization via `BuildingAutomationSyncPacket` coordinates player automation overrides across client sessions without desync.
+
+
+---
+
+## 11. Chemical Processing & BuildingEditor Safe UI Parenting
+
+### Challenges:
+*Chemical Processing* (by Ronivan) includes a `BuildingEditor` inspection tool that dynamically instantiates UI windows during gameplay via `ShowWindow()`. In active gameplay or pause screen states, `FrontEndManager.Instance` can be `null`, which caused unhandled `NullReferenceException` crashes when the window attempted to attach itself to the front-end canvas.
+
+### Engineering Solutions:
+- **`ChemicalProcessingCompatibility.cs`**:
+  - Dynamically detects `ChemicalProcessing` and intercepts `BuildingEditor.ShowWindow()` with a safe UI parenting resolver.
+  - Automatically redirects parenting to `GameScreenManager.Instance.ssOverlayCanvas` or `GetTargetWidget()` when `FrontEndManager.Instance` is unavailable.
+  - Ensures full compatibility with Japanese/CJK community translation packs (`NotoSansCJKjp-Regular`) without string formatting or font metric errors.
+
+---
+
+## 12. SymbolOverrideController Deserialization & SaveLoad Auto-Healing
+
+### Challenges:
+When loading existing saves containing Ronivan's mods (Metallurgy, Chemical Processing, Nuclear) or custom buildings initialized via `SaveLoadRoot.Load` or `Util.KInstantiate`, the property `usingNewSymbolOverrideSystem` on `KBatchedAnimController` is not serialized and defaults to `false`.
+When `GameObject.SetActive(true)` runs during scene instantiation, Unity executes `Awake()` -> `InitializeComponent()` -> `SymbolOverrideController.OnPrefabInit()`.
+Because `usingNewSymbolOverrideSystem` is `false`, the game throws a fatal assertion:
+```
+Assert failed: SymbolOverrideController requires usingNewSymbolOverrideSystem to be set to true. Try adding the component by calling: SymbolOverrideControllerUtil.AddToPrefab
+```
+Under diagnostic mod catchers (such as LogCatcher or FastTrack strict mode), this assertion terminates the game process during world generation or save loading.
+
+### Engineering Solutions:
+- **`SymbolOverrideControllerCompatibility.cs`**:
+  - **`SymbolOverrideController_OnPrefabInit_Prefix`**: Pre-emptively inspects the associated `KBatchedAnimController`. If missing, safely attaches one; if `usingNewSymbolOverrideSystem` is `false`, auto-heals it to `true` before the assertion evaluates.
+  - **`SymbolOverrideControllerUtil_AddToPrefab_Prefix`**: Guarantees that `usingNewSymbolOverrideSystem` is flagged `true` prior to `AddComponent<SymbolOverrideController>()` triggering `Awake()`.
+  - Ensures 100% crash-free save loading for Ronivan's industrial suite across all world types.
+
+---
+
+## 13. GeoTuner Premature Class Constructor Sound Path Auto-Healing
+
+### Challenges:
+Vanilla *Oxygen Not Included* defines static audio event paths on the `GeoTuner` class:
+```csharp
+public static string liquidGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Geyser");
+public static string gasGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Vent");
+public static string metalGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Volcano");
+```
+Because these are static field initializers, they evaluate when the CLR first references `typeof(GeoTuner)`.
+During early mod loading (`OnLoad`), mod reflection passes (such as station chore suppression registration) touched the `GeoTuner` type. At that instant, `GlobalAssets` had not yet loaded game audio banks, so `GetSound(...)` returned `null`, permanently freezing all three static sound paths to `null`.
+Later in-game, when duplicants or automation tuned a geyser, `GeoTuner.TriggerSoundsForGeyserChange()` executed `SoundEvent.PlayOneShot(liquidGeyserTuningSoundPath, ...)`.
+FMOD's `RuntimeManager.PathToGUID(null)` then threw `NullReferenceException` inside `StateMachine.ExecuteActions`, crashing into the "Black Hole" error modal.
+
+### Engineering Solutions:
+- **`GeoTunerSoundSafetyPatch.cs`**:
+  - **Auto-Healing (`EnsureSoundPathsPopulated`)**: Checks if the static sound paths are null or empty. If so, re-resolves them against `GlobalAssets.GetSound(...)` once sound assets are loaded.
+  - **Defensive Harmony Prefix**: Prefix patch on `GeoTuner.TriggerSoundsForGeyserChange` verifies `!string.IsNullOrEmpty(soundPath)` before initiating sound playback, safely muting if audio is missing, and returns `false` to bypass vanilla's unguarded code.
+  - **Proactive Hydration**: Injected into `BuildingPrefabInjection` and `AutoGeoTuner.Prepare()`, ensuring paths are valid well before any geyser tuning state machine triggers.

@@ -1,6 +1,6 @@
-# Supported content: universal support for vanilla base game and all DLC expansions.
+﻿# Supported content: universal support for vanilla base game and all DLC expansions.
 supportedContent: ALL
 minimumSupportedBuild: 744825
-version: 2.4.35
+version: 2.4.39
 APIVersion: 2
 

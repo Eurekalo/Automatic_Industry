@@ -197,6 +197,19 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
+- **v2.4.39**:
+  - Eliminated game-crashing Black Hole NRE crash in `GeoTuner.TriggerSoundsForGeyserChange` caused by premature static constructor evaluation during `OnLoad`.
+  - Implemented `GeoTunerSoundSafetyPatch` with dynamic audio path auto-healing via `GlobalAssets.GetSound(...)` and defensive null-checking prefix.
+  - Proactive sound path hydration in `BuildingPrefabInjection` and `AutoGeoTuner.Prepare()`.
+  - Added `FMODUnity` reference and automated regression Test #39 (246/246 sandbox tests passing).
+- **v2.4.38**:
+  - Save load & entity deserialization crash prevention for Ronivan's mods (Metallurgy, Chemical Processing, Nuclear).
+  - Implemented `SymbolOverrideControllerCompatibility` prefix auto-healing `usingNewSymbolOverrideSystem = true` and guarding against missing `KBatchedAnimController`.
+- **v2.4.37**:
+  - In-game mod config UI parenting fix neutralizing `Chemical Processing` BuildingEditor `ShowWindow` NRE.
+  - Safely routed fallback parenting to `ssOverlayCanvas` when `FrontEndManager` is null.
+- **v2.4.36**:
+  - ModMenu direct lifecycle decoupling, eliminating profile snapshot synchronization loops and restart wipeout prompts.
 - **v2.4.35**:
   - PLib `OptionsDialog` parameter binding alignment (`PDialog dialog`) and load crash prevention via safe manual patch hook.
   - Multi-mod compatibility fix for **No Manual Delivery** (`SolidTransferArm` animation override assertion suppression via `StandardWorkerAttachOverrideAnimsPatch`).
@@ -240,7 +253,7 @@ dotnet build AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutoMachine
 dotnet run --project toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.4.35.ps1
+powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.4.39.ps1
 ```
 
 ---

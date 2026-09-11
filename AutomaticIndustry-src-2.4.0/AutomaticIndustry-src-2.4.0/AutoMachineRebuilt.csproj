@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <!--
     Visual Studio / dotnet build project.
@@ -13,7 +13,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>2.4.35</Version>
+    <Version>2.4.39</Version>
     <Authors>AutoMachine Rebuilt contributors; original AutoMachine author</Authors>
     <Copyright>MIT License</Copyright>
     <ONIManaged Condition="'$(ONIManaged)' == ''">$(ONI_MANAGED)</ONIManaged>
@@ -67,6 +67,10 @@
     </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>$(ONIManaged)/Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+        <Reference Include="FMODUnity">
+      <HintPath>$(ONIManaged)/FMODUnity.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="0Harmony">

@@ -35,7 +35,7 @@
 ### 4. Ronivan's Legacy - Industrial Revolution
 - **Workshop Link**: [Steam Workshop (ID: 3557584850)](https://steamcommunity.com/sharedfiles/filedetails/?id=3557584850)
 - **Description**: Revives and expands upon a classic mod to introduce new industrial-era machinery, resources, and complex manufacturing chains into the game's tech progression.
-- **Compatibility Status**: **Planned & In-Testing**. Automated fabricator logic cleanly discovers machines derived from `ComplexFabricator`.
+- **Compatibility Status**: **Fully Compatible (v2.4.38+)**. Automated fabricator logic cleanly discovers machines derived from ComplexFabricator. Dedicated compatibility shims auto-heal SymbolOverrideController deserialization on save load and ensure safe UI parenting for in-game BuildingEditor windows.
 
 ---
 

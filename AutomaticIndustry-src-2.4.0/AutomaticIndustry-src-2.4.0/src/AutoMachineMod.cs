@@ -23,9 +23,14 @@ namespace AutoMachineRebuilt
         /// <param name="harmony">Harmony instance dedicated to this mod.</param>
         public override void OnLoad(Harmony harmony)
         {
-            base.OnLoad(harmony);
-
-            PreventWindowsGhosting();
+            try
+            {
+                base.OnLoad(harmony);
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error("Non-fatal: one or more Harmony auto-patches failed to apply during PatchAll", ex);
+            }
 
             PUtil.InitLibrary(false);
 
@@ -60,6 +65,14 @@ namespace AutoMachineRebuilt
             {
                 CustomizeBuildingsCompatibility.Apply(harmony);
             });
+            SafeInvoke.Try("ChemicalProcessing compatibility shim (OnLoad)", delegate
+            {
+                ChemicalProcessingCompatibility.Apply(harmony);
+            });
+            SafeInvoke.Try("SymbolOverrideController compatibility shim (OnLoad)", delegate
+            {
+                SymbolOverrideControllerCompatibility.Apply(harmony);
+            });
             SafeInvoke.Try("OptionsDialog layout fix patch (OnLoad)", delegate
             {
                 OptionsDialogLayoutFixPatch.Apply(harmony);
@@ -68,26 +81,7 @@ namespace AutoMachineRebuilt
             Log.Info("Loaded. Automation options can be changed in the mod settings.");
         }
 
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        private static extern void DisableProcessWindowsGhosting();
 
-        /// <summary>
-        /// Prevents Windows DWM from marking the game window as 'Not Responding' (white screen/hang)
-        /// during heavy synchronous asset and save file loading across multiple active mods.
-        /// </summary>
-        private static void PreventWindowsGhosting()
-        {
-            try
-            {
-                if (System.Environment.OSVersion.Platform == System.PlatformID.Win32NT)
-                {
-                    DisableProcessWindowsGhosting();
-                }
-            }
-            catch
-            {
-            }
-        }
 
         /// <summary>Creates the string table entries of this mod.</summary>
         private static void RegisterStrings()
@@ -116,6 +110,16 @@ namespace AutoMachineRebuilt
             {
                 Harmony harmony = new Harmony("AutoMachineRebuilt.Compatibility");
                 CustomizeBuildingsCompatibility.Apply(harmony);
+            });
+            SafeInvoke.Try("ChemicalProcessing compatibility shim (Db.Initialize)", delegate
+            {
+                Harmony harmony = new Harmony("AutoMachineRebuilt.Compatibility");
+                ChemicalProcessingCompatibility.Apply(harmony);
+            });
+            SafeInvoke.Try("SymbolOverrideController compatibility shim (Db.Initialize)", delegate
+            {
+                Harmony harmony = new Harmony("AutoMachineRebuilt.Compatibility");
+                SymbolOverrideControllerCompatibility.Apply(harmony);
             });
         }
     }
