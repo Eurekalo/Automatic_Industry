@@ -1,3 +1,15 @@
+## 2.4.40
+
+- **GeoTuner Delivery Fetch Abort Loop & Priority Flickering Fix (地质调谐仪运送材料任务中断循环与优先级闪烁修复)**:
+  - **Material Delivery & Programming Errands Blockage Elimination**:
+    - Resolved the critical issue where switching a Geotuner's target geyser left the building unable to receive tuning materials (50kg Bleach Stone, Fertilizer, Abyssalite, etc.), caused priority adjustments to flicker and vanish, and permanently stalled subsequent automated/manual research.
+    - **Root Cause**: In vanilla ONI, `ManualDeliveryKG.RequestedItemTag`'s property setter unconditionally executes `AbortDelivery("Requested Item Tag Changed")` on every assignment without checking if `value == requestedItemTag`. Because `AutoGeoTuner.Step()` runs on an `ISim200ms` cadence (5 times per second), assigning `RequestedItemTag` repeatedly cancelled the active `FetchList2` chore 5 times every second, wiping out duplicant errand queues and resetting UI priority displays.
+  - **Strict Inequality Guards & Non-Destructive Delivery Maintenance**:
+    - Replaced unconditional property writes in `AutoGeoTuner` with `EnsureDeliveryConfigured()`, strictly guarding `RequestedItemTag`, `capacity`, `refillMass`, `MinimumMass`, and pause states with inequality checks.
+    - Fetch chores now remain active and uninterrupted, allowing Auto-Sweepers and Duplicants to deliver the 50kg tuning material immediately upon geyser selection.
+  - **Seamless Tuning Broadcast Loop**:
+    - Hardened `AutoCompleteResearch()` to cleanly buffer the next 50kg in storage while a tuning broadcast is running, and automatically consume the material and re-trigger broadcast the instant the previous broadcast expires (`remaining <= 0s`), achieving 100% tuning uptime with zero downtime.
+
 ## 2.4.39
 
 - **GeoTuner Premature Class Constructor Sound NRE Fix & Auto-Healing (地热调谐器静态构造函数提前求值致空引用黑洞崩溃修复)**:

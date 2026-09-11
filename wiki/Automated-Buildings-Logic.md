@@ -269,7 +269,8 @@ This document is the definitive technical reference for every automated building
 
 #### Code Function Logic:
 - **Geotuner**: Automates scientist geyser study and amplification interaction; displays tuning progress and geyser linkage on building meters.
-  - **Audio & Static Constructor Safety (v2.4.39)**: Features dynamic sound path auto-healing and defensive event prefix via GeoTunerSoundSafetyPatch to completely eliminate vanilla/FMOD null pointer Black Hole crashes when tuning geysers.
+  - **Audio & Static Constructor Safety (v2.4.39)**: Features dynamic sound path auto-healing and defensive event prefix via `GeoTunerSoundSafetyPatch` to completely eliminate vanilla/FMOD null pointer Black Hole crashes when tuning geysers.
+  - **Delivery Fetch Stability & Priority Persistence (v2.4.40)**: Strictly guards `ManualDeliveryKG` tags and capacities with inequality checks to prevent fetch chore cancellation loops and priority flickering on 200ms simulation cadence.
 - **Biobot Builder**: Consumes steel and zombie spore biomass automatically to construct Morb Rovers.
 
 ---

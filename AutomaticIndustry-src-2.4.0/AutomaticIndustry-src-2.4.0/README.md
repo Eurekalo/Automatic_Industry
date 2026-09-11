@@ -197,6 +197,11 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](CHANGELOG.md) for full patch notes.
 
+- **v2.4.40**:
+  - Fixed critical Geotuner material delivery chore abortion loop and priority flickering caused by `ManualDeliveryKG.RequestedItemTag` unconditional abort behavior.
+  - Implemented `EnsureDeliveryConfigured()` with strict inequality checks in `AutoGeoTuner` to preserve active `FetchList2` errands on `ISim200ms` cadence.
+  - Hardened `AutoCompleteResearch()` with continuous broadcast cycles and seamless buffer material consumption.
+  - Added regression Test #40 in Sandbox test suite (247/247 passing).
 - **v2.4.39**:
   - Eliminated game-crashing Black Hole NRE crash in `GeoTuner.TriggerSoundsForGeyserChange` caused by premature static constructor evaluation during `OnLoad`.
   - Implemented `GeoTunerSoundSafetyPatch` with dynamic audio path auto-healing via `GlobalAssets.GetSound(...)` and defensive null-checking prefix.
@@ -253,7 +258,7 @@ dotnet build AutoMachineRebuilt.csproj -c Release
 dotnet run --project ../../toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File ../../toolchain/scripts/package-2.4.39.ps1
+powershell -ExecutionPolicy Bypass -File ../../toolchain/scripts/package-2.4.40.ps1
 ```
 
 ---

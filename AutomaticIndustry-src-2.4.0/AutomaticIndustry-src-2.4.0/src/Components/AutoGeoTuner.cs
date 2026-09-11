@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using System;
@@ -13,8 +13,7 @@ namespace AutoMachineRebuilt.Components
     /// Automates the Geotuner building:
     /// <list type="bullet">
     /// <item>Applies pending geyser switches without waiting for a Duplicant.</item>
-    /// <item>Manages material delivery gating: only requests tuning materials when
-    /// remaining tuning broadcast time is 5% or less, preventing premature delivery.</item>
+    /// <item>Maintains tuning material delivery configuration without repeatedly cancelling chores.</item>
     /// <item>Completes the research interaction automatically and consumes 50kg
     /// material once the previous broadcast expires and material is present.</item>
     /// <item>Renders the Geotuner data depletion progress bar (100% -> 0%) or
@@ -66,19 +65,19 @@ namespace AutoMachineRebuilt.Components
             }
 
             AutoSwitchGeyser();
-            UpdateDeliveryGating();
+            EnsureDeliveryConfigured();
             AutoCompleteResearch();
             UpdateProgressBar(AutoMachineOptions.Instance.ProgressBarGeoTuner);
         }
 
         /// <summary>
-        /// Only allows tuning material delivery when the active broadcast has
-        /// 5% or less duration remaining (or when research is currently needed).
-        /// This prevents premature delivery or excessive stockpiling while tuning.
+        /// Ensures ManualDeliveryKG and Storage have the correct tags and capacity,
+        /// using strict inequality checks so that active FetchList2 chores are never
+        /// aborted repeatedly on simulation ticks.
         /// </summary>
-        private void UpdateDeliveryGating()
+        private void EnsureDeliveryConfigured()
         {
-            if (smi == null || smi.manualDelivery == null)
+            if (smi == null || smi.manualDelivery == null || smi.storage == null)
             {
                 return;
             }
@@ -95,28 +94,35 @@ namespace AutoMachineRebuilt.Components
                 return;
             }
 
-            bool isBroadcasting = smi.sm.hasBeenWorkedByResearcher.Get(smi);
-            if (isBroadcasting)
+            if (smi.manualDelivery.IsPaused)
             {
-                float duration = settings.duration > 0f ? settings.duration : 600f;
-                float remaining = GeoTuner.GetRemainingExpiraionTime(smi);
-                float percentRemaining = duration > 0f ? (remaining / duration) : 0f;
-
-                // When broadcast has more than 5% remaining, suppress delivery
-                if (percentRemaining > 0.05f)
-                {
-                    smi.manualDelivery.refillMass = 0f;
-                    smi.manualDelivery.capacity = 0f;
-                    return;
-                }
+                smi.manualDelivery.Pause(false, "AutoGeoTuner unpause");
             }
 
-            // Broadcast is <= 5% remaining or research is needed: open delivery
-            smi.storage.capacityKg = settings.quantity;
-            smi.manualDelivery.capacity = settings.quantity;
-            smi.manualDelivery.refillMass = settings.quantity;
-            smi.manualDelivery.MinimumMass = settings.quantity;
-            smi.manualDelivery.RequestedItemTag = settings.material;
+            if (Math.Abs(smi.storage.capacityKg - settings.quantity) > 0.001f)
+            {
+                smi.storage.capacityKg = settings.quantity;
+            }
+
+            if (Math.Abs(smi.manualDelivery.capacity - settings.quantity) > 0.001f)
+            {
+                smi.manualDelivery.capacity = settings.quantity;
+            }
+
+            if (Math.Abs(smi.manualDelivery.refillMass - settings.quantity) > 0.001f)
+            {
+                smi.manualDelivery.refillMass = settings.quantity;
+            }
+
+            if (Math.Abs(smi.manualDelivery.MinimumMass - settings.quantity) > 0.001f)
+            {
+                smi.manualDelivery.MinimumMass = settings.quantity;
+            }
+
+            if (smi.manualDelivery.RequestedItemTag != settings.material)
+            {
+                smi.manualDelivery.RequestedItemTag = settings.material;
+            }
         }
 
         private void UpdateProgressBar(bool show)
@@ -149,22 +155,26 @@ namespace AutoMachineRebuilt.Components
                 return 0f;
             }
 
+            GeoTunerConfig.GeotunedGeyserSettings settings = smi.def.GetSettingsForGeyser(assigned);
+
             // If broadcasting (consuming data): 100% -> 0%
+            bool isBroadcasting = smi.sm.hasBeenWorkedByResearcher.Get(smi);
             GeoTuner.OperationalState operational =
                 OperationalStateField?.GetValue(smi.sm) as GeoTuner.OperationalState;
-            if (operational?.geyserSelected?.broadcasting != null &&
-                AutoOilRefinery.IsInState(smi.GetCurrentState(), operational.geyserSelected.broadcasting))
+            bool inBroadcastState = operational?.geyserSelected?.broadcasting != null &&
+                AutoOilRefinery.IsInState(smi.GetCurrentState(), operational.geyserSelected.broadcasting);
+
+            if (isBroadcasting || inBroadcastState)
             {
-                float duration = smi.def.GetSettingsForGeyser(assigned).duration;
-                if (duration > 0f)
+                float duration = settings.duration > 0f ? settings.duration : 600f;
+                float remaining = GeoTuner.GetRemainingExpiraionTime(smi);
+                if (duration > 0f && remaining > 0f)
                 {
-                    float remaining = GeoTuner.GetRemainingExpiraionTime(smi);
                     return Mathf.Clamp01(remaining / duration);
                 }
             }
 
             // If resource needed: 0% -> 100% material filled
-            GeoTunerConfig.GeotunedGeyserSettings settings = smi.def.GetSettingsForGeyser(assigned);
             if (smi.storage != null && settings.quantity > 0f)
             {
                 return Mathf.Clamp01(smi.storage.MassStored() / settings.quantity);
@@ -218,6 +228,12 @@ namespace AutoMachineRebuilt.Components
                 return;
             }
 
+            // If room requirement is enforced, verify room
+            if (!AutoMachineOptions.Instance.IgnoreRoomGeoTuner && !GeoTuner.IsInLabRoom(smi))
+            {
+                return;
+            }
+
             // If broadcasting is still active (> 0s), do not consume
             if (smi.sm.hasBeenWorkedByResearcher.Get(smi))
             {
@@ -250,7 +266,16 @@ namespace AutoMachineRebuilt.Components
             // Consume material and activate broadcasting
             GeoTuner.OnResearchCompleted(smi);
 
-            if (operational?.geyserSelected?.broadcasting != null)
+            // Set expiration timer to full duration
+            GeoTunerConfig.GeotunedGeyserSettings settings = smi.def.GetSettingsForGeyser(assigned);
+            float duration = settings.duration > 0f ? settings.duration : 600f;
+            smi.sm.expirationTimer.Set(duration, smi);
+
+            if (operational?.geyserSelected?.broadcasting?.active != null)
+            {
+                smi.GoTo(operational.geyserSelected.broadcasting.active);
+            }
+            else if (operational?.geyserSelected?.broadcasting != null)
             {
                 smi.GoTo(operational.geyserSelected.broadcasting);
             }
@@ -284,7 +309,7 @@ namespace AutoMachineRebuilt.Components
             }
 
             float mass = storage.GetMassAvailable(settings.material);
-            if (mass >= settings.quantity)
+            if (mass >= (settings.quantity - 0.001f))
             {
                 return true;
             }
@@ -304,7 +329,7 @@ namespace AutoMachineRebuilt.Components
                 }
             }
 
-            return total >= settings.quantity;
+            return total >= (settings.quantity - 0.001f);
         }
 
         private static GeoTuner.ResearchState GetResearchState(GeoTuner sm)
@@ -333,10 +358,14 @@ namespace AutoMachineRebuilt.Components
                     GeoTunerConfig.GeotunedGeyserSettings settings = smi.def.GetSettingsForGeyser(assigned);
                     if (settings.quantity > 0f)
                     {
-                        smi.manualDelivery.capacity = settings.quantity;
-                        smi.manualDelivery.refillMass = settings.quantity;
-                        smi.manualDelivery.MinimumMass = settings.quantity;
-                        smi.manualDelivery.RequestedItemTag = settings.material;
+                        if (Math.Abs(smi.manualDelivery.capacity - settings.quantity) > 0.001f)
+                            smi.manualDelivery.capacity = settings.quantity;
+                        if (Math.Abs(smi.manualDelivery.refillMass - settings.quantity) > 0.001f)
+                            smi.manualDelivery.refillMass = settings.quantity;
+                        if (Math.Abs(smi.manualDelivery.MinimumMass - settings.quantity) > 0.001f)
+                            smi.manualDelivery.MinimumMass = settings.quantity;
+                        if (smi.manualDelivery.RequestedItemTag != settings.material)
+                            smi.manualDelivery.RequestedItemTag = settings.material;
                     }
                 }
             }
