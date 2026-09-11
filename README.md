@@ -1,4 +1,4 @@
-# Automatic Industry (Auto Machine Rebuilt)
+# Automatic Industry
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Sgt-Imalas/Sgt_Imalas-Oni-Mods/refs/heads/master/Compat_All.png" alt="DLC Compatibility" />
