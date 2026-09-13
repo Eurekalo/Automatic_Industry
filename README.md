@@ -1,10 +1,6 @@
 # Automatic Industry
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Sgt-Imalas/Sgt_Imalas-Oni-Mods/refs/heads/master/Compat_All.png" alt="DLC Compatibility" />
-</p>
-
-<p align="center">
   <img src="https://i.imgur.com/wb8ho1w.png" alt="Automatic Industry Banner" />
 </p>
 
