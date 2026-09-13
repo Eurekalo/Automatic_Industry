@@ -22,37 +22,38 @@ namespace AutoMachineRebuilt.Config
     public sealed class AutoMachineOptions : SingletonOptions<AutoMachineOptions>, IOptions
     {
         /// <summary>Options category for classic fabricator buildings.</summary>
-        public const string CategoryFabricators = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.FABRICATORS";
+                /// <summary>Options category for general settings.</summary>
+        public const string CategoryGeneral = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.GENERAL";
 
-        /// <summary>Options category for buildings driven by custom logic.</summary>
-        public const string CategorySpecial = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.SPECIAL";
+        /// <summary>Options category for manual and maintenance utilities.</summary>
+        public const string CategoryManual = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.MANUAL";
+
+        /// <summary>Options category for classic fabricator buildings.</summary>
+        public const string CategoryFabricators = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.FABRICATORS";
 
         /// <summary>Options category for critter ranching buildings.</summary>
         public const string CategoryRanching = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.RANCHING";
 
-        /// <summary>Options category for manually operated buildings.</summary>
-        public const string CategoryManual = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.MANUAL";
-
-        /// <summary>Options category for research and analysis buildings.</summary>
-        public const string CategoryResearch = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.RESEARCH";
-
-        /// <summary>Options category for buildings that require a room.</summary>
-        public const string CategoryRoom = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.ROOM";
-
-        /// <summary>Options category for global tuning values.</summary>
-        public const string CategoryGeneral = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.GENERAL";
-
-        /// <summary>Options category for progress bars.</summary>
-        public const string CategoryProgressBars = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.PROGRESSBARS";
-
         /// <summary>Options category for Auto-Sweeper automation.</summary>
         public const string CategoryAutoSweeper = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.AUTOSWEEPER";
+
+        /// <summary>Options category for high-impact and special industrial automation.</summary>
+        public const string CategorySpecial = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.SPECIAL";
+
+        /// <summary>Options category for research, science and space exploration buildings.</summary>
+        public const string CategoryResearch = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.RESEARCH";
+
+        /// <summary>Options category for station microchips, room requirements and skill perk overrides.</summary>
+        public const string CategoryRoom = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.ROOM";
+
+        /// <summary>Options category for floating progress bars.</summary>
+        public const string CategoryProgressBars = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.PROGRESSBARS";
 
         /// <summary>Options category for diagnostics and logging.</summary>
         public const string CategoryLogging = "STRINGS.AUTOMACHINEREBUILT.CATEGORY.LOGGING";
 
         // ------------------------------------------------------------------
-        // General (declared first so the category appears on top)
+        // General Settings
         // ------------------------------------------------------------------
 
         /// <summary>
@@ -64,343 +65,416 @@ namespace AutoMachineRebuilt.Config
         [JsonProperty]
         public bool EnableAllAutomation { get; set; }
 
+
         /// <summary>Language used for the mod's own option labels.</summary>
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LANGUAGE", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LANGUAGE", CategoryGeneral)]
         [JsonProperty]
         public UiLanguage OptionsLanguage { get; set; }
+
 
         /// <summary>Shows the English text next to the translated text.</summary>
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.BILINGUAL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.BILINGUAL", CategoryGeneral)]
         [JsonProperty]
         public bool BilingualLabels { get; set; }
 
+
         /// <summary>Allows per-building automation toggle buttons on building info screens.</summary>
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.ENABLEPERBUILDINGCUSTOMIZATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.ENABLEPERBUILDINGCUSTOMIZATION", CategoryGeneral)]
         [JsonProperty]
         public bool EnablePerBuildingCustomization { get; set; } = true;
+
 
         /// <summary>Controls how building automation is switched on/off.</summary>
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.TOGGLEMODE", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.TOGGLEMODE", CategoryGeneral)]
         [JsonProperty]
         public AutomationToggleMode ToggleMode { get; set; } = AutomationToggleMode.SmartHybrid;
 
-        // ------------------------------------------------------------------
-        // Complex fabricators (duplicantOperated = false)
-        // ------------------------------------------------------------------
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.COOKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.COOKINGSTATION", CategoryFabricators)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.HIDEWORLDICONSKILL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.HIDEWORLDICONSKILL", CategoryGeneral)]
         [JsonProperty]
-        public bool UnmannedCookingStation { get; set; }
+        public bool HideWorldIconSkillRequirement { get; set; } = false;
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GOURMETCOOKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GOURMETCOOKINGSTATION", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedGourmetCookingStation { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MICROBEMUSHER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MICROBEMUSHER", CategoryFabricators)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.HIDEWORLDICONROOM", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.HIDEWORLDICONROOM", CategoryGeneral)]
         [JsonProperty]
-        public bool UnmannedMicrobeMusher { get; set; }
+        public bool HideWorldIconRoomRequirement { get; set; } = false;
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DEEPFRYER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DEEPFRYER", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedDeepfryer { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MILKPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MILKPRESS", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedMilkPress { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SMOKER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SMOKER", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedSmoker { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ROCKCRUSHER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ROCKCRUSHER", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedRockCrusher { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.METALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.METALREFINERY", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedMetalRefinery { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GLASSFORGE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GLASSFORGE", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedGlassForge { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUPERMATERIALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUPERMATERIALREFINERY", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedSupermaterialRefinery { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUITFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUITFABRICATOR", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedSuitFabricator { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLOTHINGFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLOTHINGFABRICATOR", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedClothingFabricator { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLOTHINGALTERATIONSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLOTHINGALTERATIONSTATION", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedClothingAlterationStation { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CRAFTINGTABLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CRAFTINGTABLE", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedCraftingTable { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ADVANCEDCRAFTINGTABLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ADVANCEDCRAFTINGTABLE", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedAdvancedCraftingTable { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SLUDGEPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SLUDGEPRESS", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedSludgePress { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DIAMONDPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DIAMONDPRESS", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedDiamondPress { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CHEMICALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CHEMICALREFINERY", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedChemicalRefinery { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSILEFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSILEFABRICATOR", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedMissileFabricator { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DATAMINER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DATAMINER", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedDataMiner { get; set; }
 
         // ------------------------------------------------------------------
-        // Buildings that need dedicated automation logic
+        // Manual & Maintenance Utilities
         // ------------------------------------------------------------------
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.OILREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.OILREFINERY", CategorySpecial)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.COMPOST", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.COMPOST", CategoryManual)]
         [JsonProperty]
-        public bool UnmannedOilRefinery { get; set; }
+        public bool UnmannedCompost { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.OILREFINERYEFFICIENCY", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.OILREFINERYEFFICIENCY", CategorySpecial)]
-        [JsonProperty]
-        public OilRefineryEfficiency OilRefineryEfficiency { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.OILWELLCAP", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.OILWELLCAP", CategorySpecial)]
-        [JsonProperty]
-        public bool UnmannedOilWellCap { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DESALINATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DESALINATOR", CategorySpecial)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DESALINATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DESALINATOR", CategoryManual)]
         [JsonProperty]
         public bool UnmannedDesalinator { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MILKFATSEPARATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MILKFATSEPARATOR", CategorySpecial)]
-        [JsonProperty]
-        public bool UnmannedMilkFatSeparator { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GEOTUNER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GEOTUNER", CategorySpecial)]
-        [JsonProperty]
-        public bool UnmannedGeoTuner { get; set; }
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.LIQUIDBOTTLER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.LIQUIDBOTTLER", CategoryManual)]
         [JsonProperty]
         public bool UnmannedLiquidBottler { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GASBOTTLER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GASBOTTLER", CategoryManual)]
         [JsonProperty]
         public bool UnmannedGasBottler { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.LIQUIDPUMPINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.LIQUIDPUMPINGSTATION", CategoryManual)]
         [JsonProperty]
         public bool UnmannedLiquidPumpingStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MILKFATSEPARATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MILKFATSEPARATOR", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedMilkFatSeparator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FOODDEHYDRATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FOODDEHYDRATOR", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedFoodDehydrator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SMOKER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SMOKER", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedSmoker { get; set; }
+
 
         /// <summary>
         /// Applies a new flow setting of the Liquid and Gas Valve without the
         /// vanilla "set the valve" chore, so a pipe network can be re-balanced
         /// while every Duplicant is busy elsewhere.
         /// </summary>
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.VALVE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.VALVE", CategorySpecial)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.VALVE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.VALVE", CategoryManual)]
         [JsonProperty]
         public bool UnmannedValves { get; set; }
 
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MANUALGENERATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MANUALGENERATOR", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedManualGenerator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.RESETSKILLSSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.RESETSKILLSSTATION", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedResetSkillsStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ICEKETTLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ICEKETTLE", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedIceKettle { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CAMPFIRE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CAMPFIRE", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedCampfire { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ICECOOLEDFAN", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ICECOOLEDFAN", CategoryManual)]
+        [JsonProperty]
+        public bool UnmannedIceCooledFan { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORETOOCOLD.ICECOOLEDFAN", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNORETOOCOLD.ICECOOLEDFAN", CategoryManual)]
+        [JsonProperty]
+        public bool IgnoreTooColdIceCooledFan { get; set; }
+
+
         // ------------------------------------------------------------------
-        // Ranching
+        // Industrial Fabricators
+        // ------------------------------------------------------------------
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.COOKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.COOKINGSTATION", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedCookingStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GOURMETCOOKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GOURMETCOOKINGSTATION", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedGourmetCookingStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MICROBEMUSHER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MICROBEMUSHER", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedMicrobeMusher { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DEEPFRYER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DEEPFRYER", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedDeepfryer { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MILKPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MILKPRESS", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedMilkPress { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ROCKCRUSHER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ROCKCRUSHER", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedRockCrusher { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.METALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.METALREFINERY", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedMetalRefinery { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GLASSFORGE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GLASSFORGE", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedGlassForge { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUPERMATERIALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUPERMATERIALREFINERY", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedSupermaterialRefinery { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUITFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUITFABRICATOR", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedSuitFabricator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLOTHINGFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLOTHINGFABRICATOR", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedClothingFabricator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLOTHINGALTERATIONSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLOTHINGALTERATIONSTATION", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedClothingAlterationStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CRAFTINGTABLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CRAFTINGTABLE", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedCraftingTable { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ADVANCEDCRAFTINGTABLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ADVANCEDCRAFTINGTABLE", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedAdvancedCraftingTable { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SLUDGEPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SLUDGEPRESS", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedSludgePress { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DIAMONDPRESS", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DIAMONDPRESS", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedDiamondPress { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CHEMICALREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CHEMICALREFINERY", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedChemicalRefinery { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSILEFABRICATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSILEFABRICATOR", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedMissileFabricator { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DATAMINER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DATAMINER", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedDataMiner { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.APOTHECARY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.APOTHECARY", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedApothecary { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ADVANCEDAPOTHECARY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ADVANCEDAPOTHECARY", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedAdvancedApothecary { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUSHIBAR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUSHIBAR", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedSushiBar { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FABRICATEDWOODMAKER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FABRICATEDWOODMAKER", CategoryFabricators)]
+        [JsonProperty]
+        public bool UnmannedFabricatedWoodMaker { get; set; }
+
+
+        // ------------------------------------------------------------------
+        // Ranching Stations
         // ------------------------------------------------------------------
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.RANCHSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.RANCHSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedGroomingStation { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SHEARINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SHEARINGSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedShearingStation { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MILKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MILKINGSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedMilkingStation { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.UNDERWATERRANCHSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.UNDERWATERRANCHSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedUnderwaterGroomingStation { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.UNDERWATERSHEARINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.UNDERWATERSHEARINGSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedUnderwaterShearingStation { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.UNDERWATERMILKINGSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.UNDERWATERMILKINGSTATION", CategoryRanching)]
         [JsonProperty]
         public bool UnmannedUnderwaterMilkingStation { get; set; }
 
-        // ------------------------------------------------------------------
-        // General
-        // ------------------------------------------------------------------
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.RANCHINTERVAL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.RANCHINTERVAL", CategoryGeneral)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.RANCHINTERVAL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.RANCHINTERVAL", CategoryRanching)]
         [Limit(5, 600)]
         [JsonProperty]
         public int RanchIntervalSeconds { get; set; }
 
-        // ------------------------------------------------------------------
-        // Additional fabricators (duplicantOperated = false)
-        // ------------------------------------------------------------------
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.APOTHECARY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.APOTHECARY", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedApothecary { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ADVANCEDAPOTHECARY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ADVANCEDAPOTHECARY", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedAdvancedApothecary { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SUSHIBAR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SUSHIBAR", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedSushiBar { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FABRICATEDWOODMAKER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FABRICATEDWOODMAKER", CategoryFabricators)]
-        [JsonProperty]
-        public bool UnmannedFabricatedWoodMaker { get; set; }
 
         // ------------------------------------------------------------------
-        // Manually operated buildings driven by AutoWorkableController
+        // Auto-Sweeper & Logistics
         // ------------------------------------------------------------------
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MANUALGENERATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MANUALGENERATOR", CategoryManual)]
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERHARVEST", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERHARVEST", CategoryAutoSweeper)]
         [JsonProperty]
-        public bool UnmannedManualGenerator { get; set; }
+        public bool AutoSweeperHarvest { get; set; } = true;
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.TELESCOPE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.TELESCOPE", CategoryManual)]
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERRESPECTHARVESTDESIGNATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERRESPECTHARVESTDESIGNATION", CategoryAutoSweeper)]
+        [JsonProperty]
+        public bool AutoSweeperRespectHarvestDesignation { get; set; } = true;
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERCANCELDUPEHARVESTCHORE", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERCANCELDUPEHARVESTCHORE", CategoryAutoSweeper)]
+        [JsonProperty]
+        public bool AutoSweeperCancelDupeHarvestChore { get; set; } = true;
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERBOTTLERDIRECTPICKUP", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERBOTTLERDIRECTPICKUP", CategoryAutoSweeper)]
+        [JsonProperty]
+        public bool AutoSweeperBottlerDirectPickup { get; set; } = true;
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LIQUIDRESERVOIRDUPLICANTFETCH", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LIQUIDRESERVOIRDUPLICANTFETCH", CategoryAutoSweeper)]
+        [JsonProperty]
+        public bool LiquidReservoirDuplicantFetch { get; set; } = true;
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LIQUIDRESERVOIRAUTOSWEEPERFETCH", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LIQUIDRESERVOIRAUTOSWEEPERFETCH", CategoryAutoSweeper)]
+        [JsonProperty]
+        public bool LiquidReservoirAutoSweeperFetch { get; set; } = true;
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERSCANINTERVAL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERSCANINTERVAL", CategoryAutoSweeper)]
+        [Limit(0.5f, 5.0f)]
+        [JsonProperty]
+        public float AutoSweeperScanInterval { get; set; } = 1.5f;
+
+
+        // ------------------------------------------------------------------
+        // High-Impact & Special Industry
+        // ------------------------------------------------------------------
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GEOTUNER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GEOTUNER", CategorySpecial)]
+        [JsonProperty]
+        public bool UnmannedGeoTuner { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.OILREFINERY", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.OILREFINERY", CategorySpecial)]
+        [JsonProperty]
+        public bool UnmannedOilRefinery { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.OILREFINERYEFFICIENCY", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.OILREFINERYEFFICIENCY", CategorySpecial)]
+        [JsonProperty]
+        public OilRefineryEfficiency OilRefineryEfficiency { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.OILWELLCAP", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.OILWELLCAP", CategorySpecial)]
+        [JsonProperty]
+        public bool UnmannedOilWellCap { get; set; }
+
+
+        // ------------------------------------------------------------------
+        // Research & Space Exploration
+        // ------------------------------------------------------------------
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.TELESCOPE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.TELESCOPE", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedTelescope { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLUSTERTELESCOPE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLUSTERTELESCOPE", CategoryManual)]
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLUSTERTELESCOPE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLUSTERTELESCOPE", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedClusterTelescope { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLUSTERTELESCOPEENCLOSED", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLUSTERTELESCOPEENCLOSED", CategoryManual)]
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CLUSTERTELESCOPEENCLOSED", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CLUSTERTELESCOPEENCLOSED", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedClusterTelescopeEnclosed { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MANUALHIGHENERGYPARTICLESPAWNER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MANUALHIGHENERGYPARTICLESPAWNER", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedManualHighEnergyParticleSpawner { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.RESETSKILLSSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.RESETSKILLSSTATION", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedResetSkillsStation { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ICEKETTLE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ICEKETTLE", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedIceKettle { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.CAMPFIRE", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.CAMPFIRE", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedCampfire { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ICECOOLEDFAN", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ICECOOLEDFAN", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedIceCooledFan { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORETOOCOLD.ICECOOLEDFAN", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNORETOOCOLD.ICECOOLEDFAN", CategoryManual)]
-        [JsonProperty]
-        public bool IgnoreTooColdIceCooledFan { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.COMPOST", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.COMPOST", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedCompost { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FOODDEHYDRATOR", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FOODDEHYDRATOR", CategoryManual)]
-        [JsonProperty]
-        public bool UnmannedFoodDehydrator { get; set; }
-
-        // ------------------------------------------------------------------
-        // Research and analysis buildings
-        // ------------------------------------------------------------------
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.RESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.RESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedResearchCenter { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ADVANCEDRESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ADVANCEDRESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedAdvancedResearchCenter { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.COSMICRESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.COSMICRESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedCosmicResearchCenter { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.DLC1COSMICRESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.DLC1COSMICRESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedDlc1CosmicResearchCenter { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.NUCLEARRESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.NUCLEARRESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedNuclearResearchCenter { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.ORBITALRESEARCHCENTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.ORBITALRESEARCHCENTER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedOrbitalResearchCenter { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MANUALHIGHENERGYPARTICLESPAWNER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MANUALHIGHENERGYPARTICLESPAWNER", CategoryResearch)]
+        [JsonProperty]
+        public bool UnmannedManualHighEnergyParticleSpawner { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.GENETICANALYSISSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.GENETICANALYSISSTATION", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedGeneticAnalysisStation { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MORBROVERMAKER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MORBROVERMAKER", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedMorbRoverMaker { get; set; }
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.GEYSERSTUDY", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.GEYSERSTUDY", CategoryResearch)]
         [JsonProperty]
         public bool UnmannedGeyserStudy { get; set; }
 
-        // ------------------------------------------------------------------
-        // Buildings with a mandatory vanilla room requirement
-        // ------------------------------------------------------------------
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSIONCONTROL", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSIONCONTROL", CategoryRoom)]
-        [JsonProperty]
-        public bool UnmannedMissionControl { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.MISSIONCONTROL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreRoomMissionControl { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSIONCONTROLCLUSTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSIONCONTROLCLUSTER", CategoryRoom)]
-        [JsonProperty]
-        public bool UnmannedMissionControlCluster { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.MISSIONCONTROLCLUSTER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreRoomMissionControlCluster { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FARMSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FARMSTATION", CategoryRoom)]
-        [JsonProperty]
-        public bool UnmannedFarmStation { get; set; }
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.FARMSTATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreRoomFarmStation { get; set; }
-
-        /// <summary>
-        /// Lets the Farm Station produce fertilizer even when no plant asked
-        /// for it. Vanilla only produces on demand, so this is opt in.
-        /// </summary>
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORECROPDEMAND", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNORECROPDEMAND", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreCropDemandFarmStation { get; set; }
 
         /// <summary>
         /// Re-tags the delivery task of the research buildings as a machine
@@ -413,21 +487,20 @@ namespace AutoMachineRebuilt.Config
         [JsonProperty]
         public bool SweeperResearchDelivery { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SPICEGRINDER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SPICEGRINDER", CategoryRoom)]
-        [JsonProperty]
-        public bool UnmannedSpiceGrinder { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.SPICEGRINDER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreRoomSpiceGrinder { get; set; }
+        // ------------------------------------------------------------------
+        // Station Microchips & Room Overrides
+        // ------------------------------------------------------------------
 
         [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.POWERCONTROLSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.POWERCONTROLSTATION", CategoryRoom)]
         [JsonProperty]
         public bool UnmannedPowerControlStation { get; set; }
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.POWERCONTROLSTATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
         [JsonProperty]
         public bool IgnoreRoomPowerControlStation { get; set; }
+
 
         /// <summary>
         /// Drops the "Power Tinkering" skill perk requirement of the Power
@@ -438,125 +511,143 @@ namespace AutoMachineRebuilt.Config
         [JsonProperty]
         public bool IgnoreSkillPowerControlStation { get; set; }
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.GEOTUNER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
-        [JsonProperty]
-        public bool IgnoreRoomGeoTuner { get; set; }
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREDEMAND.POWERCONTROLSTATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREDEMAND.POWERCONTROLSTATION", CategoryRoom)]
         [JsonProperty]
         public bool IgnorePowerDemandPowerControlStation { get; set; }
 
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.FARMSTATION", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.FARMSTATION", CategoryRoom)]
+        [JsonProperty]
+        public bool UnmannedFarmStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.FARMSTATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreRoomFarmStation { get; set; }
+
+
+        /// <summary>
+        /// Lets the Farm Station produce fertilizer even when no plant asked
+        /// for it. Vanilla only produces on demand, so this is opt in.
+        /// </summary>
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORECROPDEMAND", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNORECROPDEMAND", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreCropDemandFarmStation { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSIONCONTROL", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSIONCONTROL", CategoryRoom)]
+        [JsonProperty]
+        public bool UnmannedMissionControl { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.MISSIONCONTROL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreRoomMissionControl { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.MISSIONCONTROLCLUSTER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.MISSIONCONTROLCLUSTER", CategoryRoom)]
+        [JsonProperty]
+        public bool UnmannedMissionControlCluster { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.MISSIONCONTROLCLUSTER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreRoomMissionControlCluster { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.BUILDING.SPICEGRINDER", "STRINGS.AUTOMACHINEREBUILT.BUILDINGDESC.SPICEGRINDER", CategoryRoom)]
+        [JsonProperty]
+        public bool UnmannedSpiceGrinder { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.SPICEGRINDER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreRoomSpiceGrinder { get; set; }
+
+
+        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM.GEOTUNER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.IGNOREROOM", CategoryRoom)]
+        [JsonProperty]
+        public bool IgnoreRoomGeoTuner { get; set; }
+
+
         // ------------------------------------------------------------------
-        // Progress Bars Category
+        // Progress Bars
         // ------------------------------------------------------------------
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.RESEARCH", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.RESEARCH", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarResearch { get; set; } = true;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.GEOTUNER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.GEOTUNER", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarGeoTuner { get; set; } = true;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.BOTTLER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.BOTTLER", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarBottler { get; set; } = true;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.FABRICATORS", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.FABRICATORS", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarFabricators { get; set; } = true;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.TELESCOPES", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.TELESCOPES", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarTelescopes { get; set; } = true;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.SPICEGRINDER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.SPICEGRINDER", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarSpiceGrinder { get; set; } = true;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.GLEANER", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.GLEANER", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarGleaner { get; set; } = true;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.POWERCONTROLSTATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.POWERCONTROLSTATION", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarPowerControlStation { get; set; } = true;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.PROGRESSBAR.GEYSERTUNING", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.PROGRESSBAR.GEYSERTUNING", CategoryProgressBars)]
         [JsonProperty]
         public bool ProgressBarGeyserTuning { get; set; } = true;
 
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.HIDEWORLDICONSKILL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.HIDEWORLDICONSKILL", CategoryGeneral)]
-        [JsonProperty]
-        public bool HideWorldIconSkillRequirement { get; set; } = false;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.HIDEWORLDICONROOM", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.HIDEWORLDICONROOM", CategoryGeneral)]
-        [JsonProperty]
-        public bool HideWorldIconRoomRequirement { get; set; } = false;
 
         // ------------------------------------------------------------------
-        // Auto-Sweeper (Solid Transfer Arm)
-        // ------------------------------------------------------------------
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERHARVEST", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERHARVEST", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool AutoSweeperHarvest { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERRESPECTHARVESTDESIGNATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERRESPECTHARVESTDESIGNATION", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool AutoSweeperRespectHarvestDesignation { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERCANCELDUPEHARVESTCHORE", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERCANCELDUPEHARVESTCHORE", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool AutoSweeperCancelDupeHarvestChore { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERBOTTLERDIRECTPICKUP", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERBOTTLERDIRECTPICKUP", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool AutoSweeperBottlerDirectPickup { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LIQUIDRESERVOIRDUPLICANTFETCH", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LIQUIDRESERVOIRDUPLICANTFETCH", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool LiquidReservoirDuplicantFetch { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LIQUIDRESERVOIRAUTOSWEEPERFETCH", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LIQUIDRESERVOIRAUTOSWEEPERFETCH", CategoryAutoSweeper)]
-        [JsonProperty]
-        public bool LiquidReservoirAutoSweeperFetch { get; set; } = true;
-
-        [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.AUTOSWEEPERSCANINTERVAL", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.AUTOSWEEPERSCANINTERVAL", CategoryAutoSweeper)]
-        [Limit(0.5f, 5.0f)]
-        [JsonProperty]
-        public float AutoSweeperScanInterval { get; set; } = 1.5f;
-
-        // ------------------------------------------------------------------
-        // Diagnostics and Logging
+        // Diagnostics & Logging
         // ------------------------------------------------------------------
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.ENABLEDIAGNOSTICLOGGING", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.ENABLEDIAGNOSTICLOGGING", CategoryLogging)]
         [JsonProperty]
         public bool EnableDiagnosticLogging { get; set; } = false;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LOGBUILDINGAUTOMATION", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LOGBUILDINGAUTOMATION", CategoryLogging)]
         [JsonProperty]
         public bool LogBuildingAutomation { get; set; } = false;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LOGBUILDINGINTERACTIONS", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LOGBUILDINGINTERACTIONS", CategoryLogging)]
         [JsonProperty]
         public bool LogBuildingInteractions { get; set; } = false;
 
+
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.LOGPROBLEMATICBUILDINGS", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.LOGPROBLEMATICBUILDINGS", CategoryLogging)]
         [JsonProperty]
         public bool LogProblematicBuildings { get; set; } = false;
+
 
         [Option("STRINGS.AUTOMACHINEREBUILT.OPTION.VERBOSELOGGING", "STRINGS.AUTOMACHINEREBUILT.TOOLTIP.VERBOSELOGGING", CategoryLogging)]
         [JsonProperty]
         public bool VerboseLogging { get; set; } = false;
 
-        /// <summary>
-        /// Creates an options instance holding the shipped defaults.
-        /// Buildings automated by the original mod default to enabled, newly
-        /// automated buildings default to disabled so existing colonies keep
-        /// behaving the way their owner expects.
-        /// </summary>
         public AutoMachineOptions()
         {
             UnmannedCookingStation = true;

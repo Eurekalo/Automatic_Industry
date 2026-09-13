@@ -19,15 +19,15 @@ namespace AutoMachineRebuilt
         {
             public static class CATEGORY
             {
-                public static LocString FABRICATORS = "Fabricators";
-                public static LocString SPECIAL = "Special buildings";
-                public static LocString RANCHING = "Ranching";
-                public static LocString GENERAL = "General";
-                public static LocString MANUAL = "Manual buildings";
-                public static LocString RESEARCH = "Research buildings";
-                public static LocString ROOM = "Room bound buildings";
+                public static LocString GENERAL = "General Settings";
+                public static LocString MANUAL = "Manual & Maintenance Utilities";
+                public static LocString FABRICATORS = "Industrial Fabricators";
+                public static LocString RANCHING = "Ranching Stations";
+                public static LocString AUTOSWEEPER = "Auto-Sweeper & Logistics";
+                public static LocString SPECIAL = "High-Impact & Special Industry";
+                public static LocString RESEARCH = "Research & Space Exploration";
+                public static LocString ROOM = "Station Microchips & Room Overrides";
                 public static LocString PROGRESSBARS = "Progress Bars";
-                public static LocString AUTOSWEEPER = "Auto-Sweeper";
                 public static LocString LOGGING = "Diagnostics & Logging";
             }
 
