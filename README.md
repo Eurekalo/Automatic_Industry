@@ -1,10 +1,6 @@
 # Automatic Industry
 
 <p align="center">
-  <img src="https://i.imgur.com/wb8ho1w.png" alt="Automatic Industry Banner" />
-</p>
-
-<p align="center">
   <img src="https://i.imgur.com/5qdKRkE.gif" alt="Showcase Animation" />
 </p>
 
