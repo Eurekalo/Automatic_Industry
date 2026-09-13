@@ -193,55 +193,6 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
-- **v2.4.40**:
-  - Fixed critical Geotuner material delivery chore abortion loop and priority flickering caused by `ManualDeliveryKG.RequestedItemTag` unconditional abort behavior.
-  - Implemented `EnsureDeliveryConfigured()` with strict inequality checks in `AutoGeoTuner` to preserve active `FetchList2` errands on `ISim200ms` cadence.
-  - Hardened `AutoCompleteResearch()` with continuous broadcast cycles and seamless buffer material consumption.
-  - Added regression Test #40 in Sandbox test suite (247/247 passing).
-- **v2.4.39**:
-  - Eliminated game-crashing Black Hole NRE crash in `GeoTuner.TriggerSoundsForGeyserChange` caused by premature static constructor evaluation during `OnLoad`.
-  - Implemented `GeoTunerSoundSafetyPatch` with dynamic audio path auto-healing via `GlobalAssets.GetSound(...)` and defensive null-checking prefix.
-  - Proactive sound path hydration in `BuildingPrefabInjection` and `AutoGeoTuner.Prepare()`.
-  - Added `FMODUnity` reference and automated regression Test #39 (246/246 sandbox tests passing).
-- **v2.4.38**:
-  - Save load & entity deserialization crash prevention for Ronivan's mods (Metallurgy, Chemical Processing, Nuclear).
-  - Implemented `SymbolOverrideControllerCompatibility` prefix auto-healing `usingNewSymbolOverrideSystem = true` and guarding against missing `KBatchedAnimController`.
-- **v2.4.37**:
-  - In-game mod config UI parenting fix neutralizing `Chemical Processing` BuildingEditor `ShowWindow` NRE.
-  - Safely routed fallback parenting to `ssOverlayCanvas` when `FrontEndManager` is null.
-- **v2.4.36**:
-  - ModMenu direct lifecycle decoupling, eliminating profile snapshot synchronization loops and restart wipeout prompts.
-- **v2.4.35**:
-  - PLib `OptionsDialog` parameter binding alignment (`PDialog dialog`) and load crash prevention via safe manual patch hook.
-  - Multi-mod compatibility fix for **No Manual Delivery** (`SolidTransferArm` animation override assertion suppression via `StandardWorkerAttachOverrideAnimsPatch`).
-  - Proactive `SymbolOverrideController` injection on `SolidTransferArm` completed prefabs.
-  - Case-insensitive prefab lookup in `AutoMachineOptions` with deduplicated dictionary keys.
-  - Deconstructed building footprint cell deregistration in `AutoBuildingCustomizer.OnCleanUp()`.
-  - Circuit-connected battery query in `AutoManualGeneratorController` resolving chore oscillation.
-  - Transfer arm vs Duplicant fetch disambiguation in `LiquidReservoirFetchPatches`.
-  - Zero-allocation candidate probe caching in `LocalChoreProbe`.
-- **v2.4.34**:
-  - Full compatibility shim for **Customize Buildings** (Steam ID `1818138009`).
-  - Switched `[MyCmpReq]` to `[MyCmpGet]` in `AutoOilRefinery` and `AutoOilWellCap` to prevent engine-level missing component errors.
-  - Decoupled `ComplexFabricator` injection from `duplicantOperated`.
-  - Neutralized Compost infinite state recursion and Desalinator transition clearing.
-- **v2.4.33**:
-  - Spice Grinder universal multi-ingredient automated delivery overhaul (Preserving Spice seed + salt delivery fix).
-  - Expanded storage headroom from 31 kg to 100 kg to prevent discrete seed blockages.
-  - Converted spice fetches to `FabricateFetch` for universal Duplicant and Auto-Sweeper support.
-- **v2.4.32**:
-  - Compatibility fix for **No Manual Delivery** mod (prober null fallback).
-  - Multitool worker safety fix preventing transfer arm crashes on liquids.
-- **v2.4.31**:
-  - Kiln ceramic crash fix and safe guards for naturally unattended fabricators.
-- **v2.4.28**:
-  - Per-building independent user menu toggles and dual-track coexistence.
-- **v2.4.9**:
-  - Full support for in-game runtime option toggling via **ModMenu**.
-- **v2.4.8**:
-  - Reworked Ranching stations (land and aquatic).
-  - Added Geotuner tuning count progress bar and research progress meters.
-
 ---
 
 ## 🛠️ Building From Source
