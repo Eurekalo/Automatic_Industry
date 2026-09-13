@@ -43,15 +43,22 @@ namespace AutoMachineRebuilt.Patches
             }
         }
 
-        public static void Postfix(object __instance, object dialog)
+        public static void Postfix(object __instance, object[] __args)
         {
             try
             {
-                if (dialog is PDialog pDialog)
+                if (__args != null)
                 {
-                    // Ensure wide and comfortable dialog dimensions so bilingual strings don't push checkboxes out
-                    pDialog.Size = new Vector2(Mathf.Max(pDialog.Size.x, 1020f), Mathf.Max(pDialog.Size.y, 720f));
-                    pDialog.MaxSize = new Vector2(Mathf.Max(pDialog.MaxSize.x, 1180f), Mathf.Max(pDialog.MaxSize.y, 850f));
+                    foreach (object arg in __args)
+                    {
+                        if (arg is PDialog pDialog)
+                        {
+                            // Ensure wide and comfortable dialog dimensions (780x620) so bilingual / CJK strings don't push checkboxes out
+                            pDialog.Size = new Vector2(Mathf.Max(pDialog.Size.x, 780f), Mathf.Max(pDialog.Size.y, 620f));
+                            pDialog.MaxSize = new Vector2(Mathf.Max(pDialog.MaxSize.x, 920f), Mathf.Max(pDialog.MaxSize.y, 850f));
+                            return;
+                        }
+                    }
                 }
             }
             catch

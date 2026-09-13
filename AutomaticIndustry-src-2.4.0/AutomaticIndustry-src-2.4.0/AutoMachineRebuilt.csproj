@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!--
     Visual Studio / dotnet build project.
@@ -13,7 +13,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>2.4.40</Version>
+    <Version>2.5.0</Version>
     <Authors>AutoMachine Rebuilt contributors; original AutoMachine author</Authors>
     <Copyright>MIT License</Copyright>
     <ONIManaged Condition="'$(ONIManaged)' == ''">$(ONI_MANAGED)</ONIManaged>
@@ -51,6 +51,10 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>$(ONIManaged)/UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+        <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(ONIManaged)/UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">

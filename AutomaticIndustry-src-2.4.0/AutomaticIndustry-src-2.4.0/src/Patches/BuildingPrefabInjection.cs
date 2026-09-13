@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using System;
@@ -117,7 +117,9 @@ namespace AutoMachineRebuilt.Patches
             AutoValveController controller = Ensure<AutoValveController>(prefab);
             if (controller != null)
             {
-                controller.Configure("VALVE");
+                KPrefabID kpid = prefab.GetComponent<KPrefabID>();
+                string tag = (kpid != null && !string.IsNullOrEmpty(kpid.PrefabTag.Name)) ? kpid.PrefabTag.Name : "Valve";
+                controller.Configure(tag);
                 Attach<AutoBuildingCustomizer>(prefab);
             }
         }

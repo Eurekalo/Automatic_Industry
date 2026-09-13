@@ -62,6 +62,12 @@ namespace AutoMachineRebuilt.Localization
             ApplyBuildingDescriptions(language, bilingual);
             BuildingNameBinder.Apply(bilingual, language);
 
+            // Register fallback strings for Building Configuration Editor prefab UI elements
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.TITLE", Translations.Get("BUILDINGEDITOR.TITLE", language));
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.INPUT.TEXT", Translations.Get("BUILDINGEDITOR.SEARCH_PLACEHOLDER", language));
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.TEXT", Translations.Get("BUILDINGEDITOR.SEARCH_PLACEHOLDER", language));
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.FILTERS.FILTERBUTTON.TEXT", "");
+
             // Remember what the labels were built with, so the options dialog
             // is only rebuilt when the player really changed the language or
             // the bilingual toggle.
@@ -93,6 +99,30 @@ namespace AutoMachineRebuilt.Localization
             }
         }
 
+        /// <summary>Maximum visual display width of a title before trimming (CJK characters count as 2).</summary>
+        private const int MaxVisualTitleWidth = 52;
+
+        /// <summary>Calculates visual width of text, counting full-width CJK characters as 2.</summary>
+        internal static int GetVisualWidth(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return 0;
+            int width = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if ((c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xAC00 && c <= 0xD7AF) ||
+                    (c >= 0x3040 && c <= 0x30FF) || (c >= 0xFF01 && c <= 0xFF60))
+                {
+                    width += 2;
+                }
+                else
+                {
+                    width += 1;
+                }
+            }
+            return width;
+        }
+
         /// <summary>
         /// Merges the English source text and its translation. Titles use a
         /// compact "English / translation" form, tooltips are stacked on two
@@ -118,16 +148,29 @@ namespace AutoMachineRebuilt.Localization
             return Trim(english + " / " + translated);
         }
 
-        /// <summary>Keeps titles short so option rows cannot overflow.</summary>
+        /// <summary>Keeps titles short and prevents wide CJK bilingual lines from overflowing dialog bounds.</summary>
         /// <param name="text">Title candidate.</param>
         private static string Trim(string text)
         {
-            if (string.IsNullOrEmpty(text) || text.Length <= MaxTitleLength)
+            if (string.IsNullOrEmpty(text) || GetVisualWidth(text) <= MaxVisualTitleWidth)
             {
                 return text;
             }
 
-            return text.Substring(0, MaxTitleLength - 1) + "…";
+            int currentWidth = 0;
+            int targetWidth = MaxVisualTitleWidth - 2;
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                int charWidth = ((c >= 0x2E80 && c <= 0x9FFF) || (c >= 0xAC00 && c <= 0xD7AF) ||
+                                 (c >= 0x3040 && c <= 0x30FF) || (c >= 0xFF01 && c <= 0xFF60)) ? 2 : 1;
+                if (currentWidth + charWidth > targetWidth)
+                {
+                    return text.Substring(0, i) + "…";
+                }
+                currentWidth += charWidth;
+            }
+            return text;
         }
 
         /// <summary>

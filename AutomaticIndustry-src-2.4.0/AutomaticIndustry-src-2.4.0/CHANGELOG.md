@@ -1,3 +1,55 @@
+## 2.5.0
+
+- **Building Configuration Editor Scope & Usability Refinements (建筑配置编辑器范围与易用性优化)**:
+  - **Feature Separation**: Removed **Auto-Sweeper Harvest** (`SolidTransferArm`) and **Geyser Study** (`GeyserStudy`) from the Building Configuration Editor, keeping them strictly inside **Mod Options** under their respective dedicated feature sections (`CategoryAutoSweeper` and `CategoryResearch`).
+  - **Virtual Planetarium Consolidation**: Consolidated `CosmicResearchCenter` and `DLC1CosmicResearchCenter` into a single clean `Virtual Planetarium` (`虚拟天象仪`) entry in the Building Configuration Editor, eliminating redundant `（原版）` and `（眼冒金星！）` duplicate entries while simultaneously controlling both vanilla and DLC automation controllers.
+  - **Telescope Icon Differentiation**: Updated base game `Telescope` sprite fallback to correctly reference `ClusterTelescopeEnclosed` (`telescope_kanim`, the large domed observatory matching Base Game ONI) rather than the DLC low tripod (`ClusterTelescope`), ensuring visually distinct and accurate icons for all telescope variants.
+  - **Liquid Valve Sprite Fix**: Resolved sprite resolution for `Liquid Valve` by mapping `"Valve"` to the canonical building prefab `"LiquidValve"`, displaying the full-color valve machinery icon instead of the purple conduit overlay dot.
+
+- **ModMenu & Multi-Dialog Compatibility (ModMenu 兼容性与多窗口层叠增强)**:
+  - Added comprehensive background dialog tracking and lifecycle management in `BuildingConfigEditorScreen`: automatically hides all active modal backgrounds (`OptionsDialog`, `ModOptions`, `ModMenuDialog`, `ModMenuScreen`) upon opening and smoothly restores them upon closing.
+  - Configured editor canvas sorting override (`overrideSorting = true`, `sortingOrder = 350`) and sibling ordering to guarantee the editor is never occluded or clipped by background dialogs.
+
+## 2.4.41
+
+- **Visual Dual-Pane Building Configuration Editor & UI Polish (双栏可视化建筑配置编辑器与界面深度优化)**:
+  - **Master-Detail Dual-Pane Architecture Inspired by Ronivan's Chemical Processing**:
+    - Implemented `BuildingConfigEditorScreen` with an intuitive dual-pane layout:
+      - **Left Pane**: Searchable, filterable building list featuring building icons, localized display names, and direct on/off automation switches.
+      - **Right Pane**: Contextual detail pane dynamically displaying building information, description, primary automation toggle, and building-specific conditional overrides.
+    - Full 1-to-1 building alignment: mapped all 24 fabricators and 16+ special/station/research/manual/ranching buildings (40+ buildings in total).
+    - Encapsulated conditional overrides: dynamically embeds building-specific work conditions inside the detail pane:
+      - *Oil Refinery*: 100% Petroleum Conversion Efficiency toggle (`Full100` vs `Vanilla50`).
+      - *Gas & Liquid Reservoirs*: Dupe & Sweeper manual delivery / fetch settings.
+      - *GeoTuner*: Tuning progress bars visibility toggle.
+      - *Research Stations, Ranching Stations & Manual Buildings*: Ignore Room requirement and Ignore Duplicant Skill requirement toggles.
+  - **Language Alignment & Boundary Overflow Fixes**:
+    - Resolved language mismatch where right detail pane fell back to English or went out of sync with selected UI language.
+    - Added word wrapping (`enableWordWrapping`) and `-36px` right margin padding to sub-option rows in `BuildingConfigEditorScreen`, preventing sub-option text from overflowing into checkboxes.
+    - Expanded Mod Options dialog dimensions to `620x600` (max `820x800`) to prevent checkboxes and labels from overflowing bounds when using Japanese, Korean, or bilingual display.
+  - **Missing UI Icons & DLC Differentiation**:
+    - Implemented sprite fallback mapping (`GetBuildingSprite`) resolving missing icons for buildings lacking standalone sprites (e.g. `GeyserStudy -> GeyserGeneric`) and DLC/vanilla pairs (`CosmicResearchCenter <-> DLC1CosmicResearchCenter`, `Telescope <-> ClusterTelescope`, `MissionControl <-> MissionControlCluster`), eliminating question mark `?` placeholders.
+    - Differentiated duplicate vanilla vs DLC buildings by dynamically appending localized suffixes: `(Spaced Out!)` vs `(Base Game)` across all 5 languages.
+  - **Disambiguation of GeoTuner vs Geyser Study**:
+    - Corrected sub-option attribution: `ProgressBarGeyserTuning` is now properly assigned to `GeoTuner` under Stations (`IgnoreRoomGeoTuner`, `ProgressBarGeoTuner`, `ProgressBarGeyserTuning`).
+    - Positioned `GeyserStudy` under Research with dedicated 5-language descriptions (`BUILDINGDESC.GEYSERSTUDY`).
+  - **Option Prefix Stripping & Subheading Consolidation**:
+    - Replaced repetitive prefixes (`Auto-Sweeper: `, `Liquid Reservoir: `, `Ignore room: `, `Ignore skill: `) with clean subheadings (`CategoryLiquidReservoir`, `CategorySkill`, `CategoryRoom`) and concise feature titles.
+  - **Window Transition & Layering**:
+    - Added window stack management in `BuildingConfigEditorScreen`: automatically hides background `ModOptions` window when opening the editor, and smoothly reopens and refreshes it on return via `OptionsScreenRefresher.Reopen()`.
+  - **Removed Redundant Configure Button**:
+    - Removed redundant `Button_ConfigureFabricators` button from the Fabricators options section while preserving top-level entry and 6 category buttons.
+  - **Valve Option Split (阀门配置拆分)**:
+    - Split `UnmannedValves` into independent `UnmannedLiquidValve` (`"Valve"`) and `UnmannedGasValve` (`"GasValve"`) options.
+    - Added backwards-compatible migration fallback (`LegacyUnmannedValves`) ensuring smooth upgrades for existing save games and configuration files.
+  - **Multi-Language Localization (多语言国际化完整支持)**:
+    - Added comprehensive translations for English, Simplified Chinese (zh-Hans), Traditional Chinese (zh-Hant), Korean (ko), and Japanese (ja) across `ModStrings.cs`, `Translations.cs`, and `BuildingDescriptions.cs`.
+    - Passed automated localization parity audit: 0 missing or mismatched keys across all 5 supported languages.
+  - **Platform-Independent AssetBundles Staging**:
+    - Packaged platform-specific AssetBundles (`ai_building_editor`) for Windows, Linux, and macOS, loaded dynamically via `BuildingEditorAssets.cs` with automatic TextMeshPro conversion.
+  - **Automated Sandbox Verification**:
+    - Comprehensive suite of 261 automated tests (`SandboxTests`) covering all 6 UI fixes, valve independence, legacy config deserialization, model mapping, and Mod Menu compatibility (261/261 tests passing).
+
 ## 2.4.40
 
 - **GeoTuner Delivery Fetch Abort Loop & Priority Flickering Fix (地质调谐仪运送材料任务中断循环与优先级闪烁修复)**:

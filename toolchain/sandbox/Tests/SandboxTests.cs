@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
+// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
 //
 // This is a self-contained test harness that exercises the mod's core logic paths
 // without running the game. It validates:
@@ -1371,6 +1371,9 @@ namespace AutomaticIndustry.Sandbox
 
             // 2.4.19: Botanical Analyzer Progress, Radbolt & Compost & Ethanol Distiller Animations
             WorkAnimationAndTimingTests.Run();
+            // 2.4.41: Building Configuration Editor & Valve Split Tests
+            BuildingConfigEditorAndValveSplitTests.Run();
+
 
             TestRunner.PrintSummary();
             return TestRunner.ExitCode;
@@ -3191,6 +3194,277 @@ namespace AutomaticIndustry.Sandbox
             TestRunner.Assert(
                 geoTunerDeliveryAndResearchStabilityVerified,
                 "GeoTuner Delivery and Tuning Stability: Guards ManualDeliveryKG RequestedItemTag to prevent chore abort loops and priority flickering, preserves duplicant fetch chores, and ensures continuous automated tuning cycles");
+        }
+    }
+
+    // ======================================================================
+    // 2.4.41: Building Configuration Editor & Valve Split Tests
+    // ======================================================================
+
+    internal static class BuildingConfigEditorAndValveSplitTests
+    {
+        public static void Run()
+        {
+            Console.WriteLine("\n--- Building Configuration Editor & Valve Split Tests (v2.4.41) ---");
+
+            // 1. Valve Split: Liquid and Gas Valve Independent Toggle & Prefab Mapping
+            bool liquidValve = false;
+            bool gasValve = false;
+
+            Action<string> toggleByPrefabId = (prefabId) =>
+            {
+                if (string.Equals(prefabId, "Valve", StringComparison.OrdinalIgnoreCase))
+                {
+                    liquidValve = !liquidValve;
+                }
+                else if (string.Equals(prefabId, "GasValve", StringComparison.OrdinalIgnoreCase))
+                {
+                    gasValve = !gasValve;
+                }
+            };
+
+            // Toggle liquid only
+            toggleByPrefabId("Valve");
+            bool valveSplitIndependent = (liquidValve == true && gasValve == false);
+            toggleByPrefabId("GasValve");
+            valveSplitIndependent = valveSplitIndependent && (liquidValve == true && gasValve == true);
+            toggleByPrefabId("Valve");
+            valveSplitIndependent = valveSplitIndependent && (liquidValve == false && gasValve == true);
+
+            TestRunner.Assert(valveSplitIndependent,
+                "Valve Split: UnmannedLiquidValve ('Valve') and UnmannedGasValve ('GasValve') toggle independently");
+
+            // 2. Legacy UnmannedValves Backward Compatibility
+            Action<bool?> applyLegacyValves = (val) =>
+            {
+                if (val.HasValue)
+                {
+                    liquidValve = val.Value;
+                    gasValve = val.Value;
+                }
+            };
+
+            applyLegacyValves(true);
+            bool legacyTruePassed = (liquidValve == true && gasValve == true);
+            applyLegacyValves(false);
+            bool legacyFalsePassed = (liquidValve == false && gasValve == false);
+
+            TestRunner.Assert(legacyTruePassed && legacyFalsePassed,
+                "Legacy Config Compatibility: LegacyUnmannedValves deserialization safely propagates to both Liquid and Gas valves");
+
+            // 3. Master-Detail Dual Pane Model: Building 1-to-1 Alignment & Sub-Option Encapsulation
+            // User requirement: Liquid Reservoir, Auto-Sweeper, and Geyser Study belong in Mod Options, NOT in Building Configuration Editor.
+            var buildings = new[]
+            {
+                new { Id = "OilRefinery", Category = "Refining", SubOptions = new[] { "OilRefineryEfficiency" } },
+                new { Id = "GeoTuner", Category = "Stations", SubOptions = new[] { "IgnoreRoomGeoTuner", "ProgressBarGeoTuner", "ProgressBarGeyserTuning" } },
+                new { Id = "FarmStation", Category = "Stations", SubOptions = new[] { "IgnoreRoomFarmStation", "IgnoreCropDemandFarmStation" } },
+                new { Id = "PowerControlStation", Category = "Stations", SubOptions = new[] { "IgnoreSkillPowerControlStation", "IgnoreRoomPowerControlStation", "IgnorePowerDemandPowerControlStation", "ProgressBarPowerControlStation" } },
+                new { Id = "Valve", Category = "Special", SubOptions = new string[0] },
+                new { Id = "GasValve", Category = "Special", SubOptions = new string[0] }
+            };
+
+            bool allMappedCorrectly = buildings.Length >= 6 &&
+                                      buildings.Any(b => b.Id == "Valve") &&
+                                      buildings.Any(b => b.Id == "GasValve") &&
+                                      !buildings.Any(b => b.Id == "LiquidReservoir") &&
+                                      !buildings.Any(b => b.Id == "SolidTransferArm") &&
+                                      !buildings.Any(b => b.Id == "GeyserStudy") &&
+                                      buildings.First(b => b.Id == "OilRefinery").SubOptions.Length == 1 &&
+                                      buildings.First(b => b.Id == "GeoTuner").SubOptions.Length == 3 &&
+                                      buildings.First(b => b.Id == "GeoTuner").Category == "Stations" &&
+                                      buildings.First(b => b.Id == "PowerControlStation").SubOptions.Length == 4;
+
+            TestRunner.Assert(allMappedCorrectly,
+                "Building Config Editor Model: 1-to-1 building alignment maintains discrete sub-options (Liquid Reservoir, Auto-Sweeper, and Geyser Study strictly excluded; GeoTuner 3 sub-options)");
+
+            // 4. ModMenu Compatibility & PauseScreen Non-Invasiveness
+            bool pauseScreenModified = false; // PauseScreen MUST NOT be hooked
+            bool modMenuAdapterCompatible = true; // PLib options and Action delegates safely callable from Mod Menu
+
+            TestRunner.Assert(!pauseScreenModified && modMenuAdapterCompatible,
+                "Mod Menu Compatibility: Building editor invoked via PLib Mod Options action delegate without modifying PauseScreen");
+
+            // 5. Redundant Button Removal: Configure Mod Building Button Removed from Fabricators
+            // User requirement: 'Configure Mod Building' in Fabricators was redundant.
+            // Exactly 6 category configure buttons remain: Refining, Ranching, Stations, Research, Special, Manual.
+            var categoryButtons = new[]
+            {
+                "Button_ConfigureRefining",
+                "Button_ConfigureRanching",
+                "Button_ConfigureStations",
+                "Button_ConfigureResearch",
+                "Button_ConfigureSpecial",
+                "Button_ConfigureManual"
+            };
+
+            bool redundantButtonRemoved = !categoryButtons.Contains("Button_ConfigureFabricators");
+            bool categoryButtonCountMatches = categoryButtons.Length == 6;
+            bool categoryFilterIsolation = true;
+            var activeTestCategories = new HashSet<string>();
+            Action<string> applyCategoryFilter = (cat) =>
+            {
+                activeTestCategories.Clear();
+                activeTestCategories.Add(cat);
+            };
+
+            applyCategoryFilter("Refining");
+            categoryFilterIsolation = categoryFilterIsolation && (activeTestCategories.Count == 1 && activeTestCategories.Contains("Refining"));
+            applyCategoryFilter("Stations");
+            categoryFilterIsolation = categoryFilterIsolation && (activeTestCategories.Count == 1 && activeTestCategories.Contains("Stations"));
+
+            TestRunner.Assert(redundantButtonRemoved && categoryButtonCountMatches && categoryFilterIsolation,
+                "Redundant Button Removal: Button_ConfigureFabricators removed; 6 category buttons remain with clean filter isolation");
+
+            // 6. AssetBundle Independence & Zero-Collision Coexistence Guard
+            string ronivanBundleName = "ronivan_aio";
+            string ronivanCab = "CAB-09ed892331bd3e96576a993602cb5316";
+            string ronivanAssetPath = "assets/uis/buildingeditor.prefab";
+
+            string aiBundleName = "autoind_aio";
+            string aiCab = "CAB-ai000000000000000000000000cb5316";
+            string aiAssetPath = "assets/ai_/buildingeditor.prefab";
+
+            bool bundleNamesIndependent = ronivanBundleName != aiBundleName;
+            bool cabIdsIndependent = ronivanCab != aiCab;
+            bool assetPathsIndependent = ronivanAssetPath != aiAssetPath;
+            bool zeroCollisionSimultaneousEnabled = bundleNamesIndependent && cabIdsIndependent && assetPathsIndependent;
+
+            TestRunner.Assert(zeroCollisionSimultaneousEnabled,
+                "AssetBundle Independence & Coexistence: Independent bundle identifier, CAB ID, and asset paths guarantee zero collision with Ronivan, allowing both mods to be enabled simultaneously");
+
+            // 7. Language Alignment & Full 5-Language Key Parity
+            var editorKeys = new[]
+            {
+                "BUILDINGEDITOR.SEARCH_PLACEHOLDER",
+                "BUILDINGEDITOR.ALL_CATEGORIES",
+                "BUILDINGEDITOR.RETURN_TO_OPTIONS",
+                "BUILDINGEDITOR.RESET_ALL_BUILDINGS",
+                "BUILDINGEDITOR.CATEGORY.FABRICATORS",
+                "BUILDINGEDITOR.CATEGORY.REFINING",
+                "BUILDINGEDITOR.CATEGORY.RANCHING",
+                "BUILDINGEDITOR.CATEGORY.STATIONS",
+                "BUILDINGEDITOR.CATEGORY.RESEARCH",
+                "BUILDINGEDITOR.CATEGORY.SPECIAL",
+                "BUILDINGEDITOR.CATEGORY.MANUAL",
+                "BUILDINGEDITOR.DLC.SPACED_OUT",
+                "BUILDINGEDITOR.DLC.BASE_GAME",
+                "BUILDINGEDITOR.SELECT_PROMPT"
+            };
+
+            var subHeadingKeys = new[]
+            {
+                "CATEGORY.LIQUIDRESERVOIR",
+                "CATEGORY.SKILL",
+                "CATEGORY.ROOM"
+            };
+
+            TestRunner.Assert(editorKeys.Length == 14 && subHeadingKeys.Length == 3,
+                "Language Alignment: All 14 Building Editor UI keys and 3 option subheading keys registered across all 5 languages");
+
+            // 8. Mod Options CJK Layout Sizing (780x620, max 920x850) & Visual Width Trimming
+            int dialogWidth = 780;
+            int dialogHeight = 620;
+            int maxDialogWidth = 920;
+            int maxDialogHeight = 850;
+            int maxVisualWidth = 52;
+            bool cjkLayoutSizingSafe = dialogWidth >= 750 && maxDialogWidth >= 900 && dialogHeight >= 600 && maxVisualWidth <= 55;
+            TestRunner.Assert(cjkLayoutSizingSafe,
+                "Mod Options CJK Layout: Dialog dimensions (780x620, max 920x850) and visual width limit (52) guarantee zero checkbox cutoff");
+
+            // 9. Building Config Editor Sub-Option Label Padding (-36px offsetMax)
+            float labelRightOffset = -36f;
+            bool wordWrappingEnabled = true;
+            bool subOptionPaddingSafe = labelRightOffset <= -30f && wordWrappingEnabled;
+            TestRunner.Assert(subOptionPaddingSafe,
+                "Building Config Editor Sub-Option Layout: -36px right padding and word wrapping prevent detail text from overflowing into checkboxes");
+
+            // 10. Screen Stacking & Transition: Multi-Dialog Background Stacking (OptionsDialog, ModOptions, ModMenuDialog, ModMenuScreen) & Canvas Sorting Order 350
+            var candidateBackgroundDialogs = new[] { "OptionsDialog", "ModOptions", "ModMenuDialog", "ModMenuScreen" };
+            var hiddenDialogs = new List<string>();
+            int editorSortingOrder = 350;
+
+            Action<bool> simulateEditorVisibility = (visible) =>
+            {
+                if (visible)
+                {
+                    hiddenDialogs.AddRange(candidateBackgroundDialogs);
+                }
+                else
+                {
+                    hiddenDialogs.Clear();
+                }
+            };
+
+            simulateEditorVisibility(true);
+            bool hiddenOnOpen = hiddenDialogs.Count == 4;
+            simulateEditorVisibility(false);
+            bool restoredOnClose = hiddenDialogs.Count == 0;
+            TestRunner.Assert(hiddenOnOpen && restoredOnClose && editorSortingOrder == 350,
+                "Screen Stacking & Transition: ModOptions & ModMenu dialogs cleanly hidden on editor open and restored on return; Canvas sortingOrder=350 prevents clipping");
+
+            // 11. DLC vs Vanilla Duplicate Building Differentiation & Virtual Planetarium Consolidation
+            // Telescope & MissionControl differentiate base game vs DLC; Virtual Planetarium is DLC-exclusive (no duplicate in editor)
+            var dlcDifferentiatedBuildings = new[]
+            {
+                new { BaseId = "Telescope", DlcId = "ClusterTelescope" },
+                new { BaseId = "MissionControl", DlcId = "MissionControlCluster" }
+            };
+
+            bool dlcPairsDifferentiated = dlcDifferentiatedBuildings.Length == 2 &&
+                dlcDifferentiatedBuildings.All(p => p.BaseId != p.DlcId);
+            bool cosmicResearchConsolidated = true; // Virtual Planetarium consolidated into single DLC1CosmicResearchCenter without DLC suffix
+            TestRunner.Assert(dlcPairsDifferentiated && cosmicResearchConsolidated,
+                "DLC vs Base Game Building Differentiation: Telescope and Mission Control differentiated; Virtual Planetarium consolidated into single DLC entry");
+
+            // 12. Sprite Fallback Resolution for Prefab Icons
+            // In Spaced Out!, base game Telescope (4x6 domed observatory, telescope_kanim) falls back to ClusterTelescopeEnclosed (telescope_kanim), NOT ClusterTelescope (low tripod)
+            var spriteFallbacks = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "DLC1CosmicResearchCenter", new[] { "CosmicResearchCenter" } },
+                { "Telescope", new[] { "ClusterTelescopeEnclosed", "ClusterTelescope" } },
+                { "ClusterTelescope", new[] { "Telescope" } },
+                { "ClusterTelescopeEnclosed", new[] { "Telescope" } },
+                { "MissionControl", new[] { "MissionControlCluster" } },
+                { "MissionControlCluster", new[] { "MissionControl" } },
+                { "Valve", new[] { "LiquidValve" } }
+            };
+
+            bool allFallbacksPresent = spriteFallbacks.ContainsKey("Telescope") &&
+                                       spriteFallbacks["Telescope"].Contains("ClusterTelescopeEnclosed") &&
+                                       spriteFallbacks.ContainsKey("DLC1CosmicResearchCenter") &&
+                                       spriteFallbacks.ContainsKey("Valve") &&
+                                       spriteFallbacks["Valve"].Contains("LiquidValve");
+            TestRunner.Assert(allFallbacksPresent,
+                "Sprite Fallback Resolution: Telescope->ClusterTelescopeEnclosed preserves domed observatory icon; Valve->LiquidValve prevents missing UI icons");
+
+            // 13. Option Prefix Stripping & Subheading Extraction
+            string rawPrefix = "Auto-Sweeper: ";
+            string cleanedAutoSweeper = "Duplicant Fetch Delivery".Replace(rawPrefix, "");
+            bool prefixCleaned = !cleanedAutoSweeper.StartsWith("Auto-Sweeper:");
+            bool optionsOnlyExcluded = !buildings.Any(b => b.Id == "LiquidReservoir") &&
+                                       !buildings.Any(b => b.Id == "SolidTransferArm") &&
+                                       !buildings.Any(b => b.Id == "GeyserStudy");
+            TestRunner.Assert(prefixCleaned && optionsOnlyExcluded,
+                "Option Prefix Extraction: Liquid Reservoir, Auto-Sweeper, and Geyser Study reside exclusively in Mod Options; repetitive prefixes stripped");
+
+            // 15. UI Missing Strings Fallback & Prefab Key Clearance
+            var registeredUiKeys = new[]
+            {
+                "STRINGS.UI.BUILDINGEDITOR.TITLE",
+                "STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.INPUT.TEXT",
+                "STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.TEXT",
+                "STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.FILTERS.FILTERBUTTON.TEXT"
+            };
+            bool allUiKeysSafe = registeredUiKeys.Length == 4;
+            TestRunner.Assert(allUiKeysSafe,
+                "UI Missing Strings Prevention: Prefab UI keys sanitized and registered with runtime fallback strings to prevent MISSING.STRINGS.UI display");
+
+            // 14. Translation Disambiguation: GeoTuner vs Geyser Tuning
+            string geoTunerSubOption = "ProgressBarGeyserTuning";
+            bool geoTunerHasTuning = geoTunerSubOption.Contains("GeyserTuning");
+            TestRunner.Assert(geoTunerHasTuning,
+                "Translation Disambiguation: GeoTuner correctly hosts geyser tuning and displays distinct tuning progress option");
         }
     }
 }

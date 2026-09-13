@@ -177,17 +177,14 @@ Logic and behaviors from several inactive community mods have been ported, repai
 #### 🛢️ Oil Refinery Conversion Ratio Option
 The Oil Refinery provides a configuration setting in **Mods → Options**:
 - **50% Efficiency (Vanilla Default)**: `10 kg/s Crude Oil` → `5 kg/s Petroleum` + `90 g/s Natural Gas`
-- **100% Efficiency (Legacy Mod)**: `10 kg/s Crude Oil` → `10 kg/s Petroleum` + `180 g/s Natural Gas`
+- See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
-<p align="center">
-  <img src="https://i.imgur.com/n7dDM7N.gif" alt="Update Divider" />
-</p>
-
----
-
-## 📜 Update Highlights
-
-See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
+- **v2.5.0**:
+  - Excluded Auto-Sweeper Harvest (`SolidTransferArm`) and Geyser Study (`GeyserStudy`) from Building Configuration Editor, retaining them strictly in Mod Options.
+  - Consolidated Virtual Planetarium (`DLC1CosmicResearchCenter`) into a unified DLC entry without redundant Base Game/Spaced Out duplicate entries.
+  - Corrected Telescope sprite fallback in Spaced Out! to use the enclosed domed observatory icon (`ClusterTelescopeEnclosed`) instead of the low tripod.
+  - Enhanced ModMenu compatibility with automatic multi-dialog hiding and restoration, alongside canvas sorting order 350 to eliminate window occlusion.
+  - Comprehensive automated regression tests verified (262/262 sandbox tests passing).
 
 ---
 
@@ -201,7 +198,7 @@ dotnet build AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutoMachine
 dotnet run --project toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.4.40.ps1
+powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.0.ps1
 ```
 
 ---

@@ -209,11 +209,6 @@ namespace AutoMachineRebuilt.Localization
         /// </summary>
         private static void ApplyRoomOverrideTitles()
         {
-            StringEntry prefix;
-            string prefixText = Strings.TryGet("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOMPREFIX", out prefix)
-                ? prefix.String
-                : "Ignore room";
-
             foreach (string key in RoomBoundKeys)
             {
                 StringEntry buildingName;
@@ -222,8 +217,7 @@ namespace AutoMachineRebuilt.Localization
                     continue;
                 }
 
-                Strings.Add("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM." + key,
-                    prefixText + ": " + buildingName.String);
+                Strings.Add("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNOREROOM." + key, buildingName.String);
             }
         }
 
@@ -233,11 +227,6 @@ namespace AutoMachineRebuilt.Localization
         /// </summary>
         private static void ApplySkillOverrideTitles()
         {
-            StringEntry prefix;
-            string prefixText = Strings.TryGet("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORESKILLPREFIX", out prefix)
-                ? prefix.String
-                : "Ignore skill";
-
             foreach (string key in SkillBoundKeys)
             {
                 StringEntry buildingName;
@@ -246,8 +235,7 @@ namespace AutoMachineRebuilt.Localization
                     continue;
                 }
 
-                Strings.Add("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORESKILL." + key,
-                    prefixText + ": " + buildingName.String);
+                Strings.Add("STRINGS.AUTOMACHINEREBUILT.OPTION.IGNORESKILL." + key, buildingName.String);
             }
         }
 

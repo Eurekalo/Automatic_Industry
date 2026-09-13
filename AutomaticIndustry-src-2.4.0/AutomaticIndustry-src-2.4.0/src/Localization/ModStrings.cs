@@ -279,6 +279,18 @@ namespace AutoMachineRebuilt
                 public static LocString LIQUIDBOTTLER = "Bottle Filler";
                 public static LocString GASBOTTLER = "Canister Filler";
                 public static LocString LIQUIDPUMPINGSTATION = "Pitcher Pump";
+                public static LocString VALVE = "Liquid and Gas Valve";
+                public static LocString LIQUIDVALVE = "Liquid Valve";
+                public static LocString GASVALVE = "Gas Valve";
+            }
+
+            public static class OPTIONS
+            {
+                public static class BUILDING_EDITOR
+                {
+                    public static LocString NAME = "Open Building Automation Editor";
+                    public static LocString TOOLTIP = "Opens the visual dual-pane configuration screen to inspect and adjust automation options for each individual building.";
+                }
             }
         }
     }

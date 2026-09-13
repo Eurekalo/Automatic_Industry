@@ -197,6 +197,18 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](CHANGELOG.md) for full patch notes.
 
+- **v2.5.0**:
+  - Refined Building Configuration Editor scope: removed Auto-Sweeper Harvest and Geyser Study from the editor list (kept exclusively in Mod Options).
+  - Consolidated Virtual Planetarium (`虚拟天象仪`) into a single unified entry, removing redundant base game / DLC duplicate listings.
+  - Fixed Base Game Telescope sprite fallback to map to `ClusterTelescopeEnclosed` (`telescope_kanim`, domed observatory) matching base game visual appearance.
+  - Enhanced ModMenu compatibility: automatic hiding/restoring of background dialogs (`ModMenuDialog`, `OptionsDialog`) and canvas z-ordering.
+  - Fixed Liquid Valve sprite mapping (`"Valve" -> "LiquidValve"`), displaying crisp full-color valve machinery icon instead of purple conduit dot.
+- **v2.4.41**:
+  - Implemented visual dual-pane **Building Configuration Editor** (`BuildingConfigEditorScreen`) inspired by Ronivan's Chemical Processing mod, featuring 1-to-1 building alignment (40+ automated buildings) and dynamically embedded conditional overrides.
+  - Full compatibility with **Mod Menu** and PLib options dialog via `Button_OpenBuildingConfigEditor` without patching `PauseScreen`.
+  - Split valve configuration into independent **Liquid Valve** (`UnmannedLiquidValve`) and **Gas Valve** (`UnmannedGasValve`) with seamless backward-compatible migration.
+  - Complete 5-language localization parity (EN, ZH-S, ZH-T, KO, JA) and platform-independent AssetBundle integration for Windows, Linux, and macOS.
+  - Added comprehensive automated regression tests (251/251 sandbox tests passing).
 - **v2.4.40**:
   - Fixed critical Geotuner material delivery chore abortion loop and priority flickering caused by `ManualDeliveryKG.RequestedItemTag` unconditional abort behavior.
   - Implemented `EnsureDeliveryConfigured()` with strict inequality checks in `AutoGeoTuner` to preserve active `FetchList2` errands on `ISim200ms` cadence.
@@ -258,7 +270,7 @@ dotnet build AutoMachineRebuilt.csproj -c Release
 dotnet run --project ../../toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File ../../toolchain/scripts/package-2.4.40.ps1
+powershell -ExecutionPolicy Bypass -File ../../toolchain/scripts/package-2.4.41.ps1
 ```
 
 ---
