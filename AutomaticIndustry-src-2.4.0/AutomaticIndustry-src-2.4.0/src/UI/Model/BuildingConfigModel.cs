@@ -30,7 +30,11 @@ namespace AutoMachineRebuilt.UI.Model
         public bool DefaultValue { get; set; }
 
         public bool IsEnabled => Getter != null && Getter();
-        public void SetEnabled(bool value) => Setter?.Invoke(value);
+        public void SetEnabled(bool value)
+        {
+            Setter?.Invoke(value);
+            BuildingConfigItem.AutoSave();
+        }
         public void ResetToDefault() => SetEnabled(DefaultValue);
     }
 
@@ -46,8 +50,27 @@ namespace AutoMachineRebuilt.UI.Model
         public List<BuildingSubOption> SubOptions { get; set; } = new List<BuildingSubOption>();
 
         public bool IsEnabled => MasterGetter != null && MasterGetter();
-        public void SetEnabled(bool value) => MasterSetter?.Invoke(value);
+        public void SetEnabled(bool value)
+        {
+            MasterSetter?.Invoke(value);
+            AutoSave();
+        }
         public bool HasSubOptions => SubOptions != null && SubOptions.Count > 0;
+
+        public static void AutoSave()
+        {
+            try
+            {
+                if (AutoMachineOptions.Instance != null)
+                {
+                    PeterHan.PLib.Options.POptions.WriteSettings(AutoMachineOptions.Instance);
+                }
+            }
+            catch (Exception ex)
+            {
+                Util.Log.Warn("AutoSave failed: " + ex.Message);
+            }
+        }
 
         public void ResetToDefault()
         {
@@ -59,6 +82,7 @@ namespace AutoMachineRebuilt.UI.Model
                     sub.ResetToDefault();
                 }
             }
+            AutoSave();
         }
 
         private static readonly Dictionary<string, string> PreferredSpritePrefabIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -280,6 +304,8 @@ namespace AutoMachineRebuilt.UI.Model
     public static class BuildingConfigRegistry
     {
         private static List<BuildingConfigItem> cachedItems;
+        private static readonly AutoMachineOptions fallbackOptions = new AutoMachineOptions();
+        private static AutoMachineOptions opt => AutoMachineOptions.Instance ?? fallbackOptions;
 
         public static void InvalidateCache()
         {
@@ -290,7 +316,6 @@ namespace AutoMachineRebuilt.UI.Model
         {
             if (cachedItems != null && !forceRefresh) return cachedItems;
 
-            AutoMachineOptions opt = AutoMachineOptions.Instance ?? new AutoMachineOptions();
             UiLanguage lang = opt.OptionsLanguage;
             List<BuildingConfigItem> list = new List<BuildingConfigItem>();
 
@@ -1322,6 +1347,27 @@ namespace AutoMachineRebuilt.UI.Model
             {
                 item.ResetToDefault();
             }
+            BuildingConfigItem.AutoSave();
+        }
+
+        public static void SetAllEnabled(bool enabled)
+        {
+            foreach (BuildingConfigItem item in GetAllItems())
+            {
+                item.SetEnabled(enabled);
+            }
+            BuildingConfigItem.AutoSave();
+        }
+
+        public static bool AreAllEnabled()
+        {
+            var all = GetAllItems();
+            if (all.Count == 0) return false;
+            foreach (BuildingConfigItem item in all)
+            {
+                if (!item.IsEnabled) return false;
+            }
+            return true;
         }
     }
 }

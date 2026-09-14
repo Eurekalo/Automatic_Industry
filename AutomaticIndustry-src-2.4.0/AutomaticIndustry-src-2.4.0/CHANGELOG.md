@@ -1,5 +1,19 @@
 ## 2.5.0
 
+- **Building Configuration Editor Immediate Auto-Save & Batch Controls (建筑配置编辑器即时保存与批量控制)**:
+  - **Immediate Persistence on Toggle & Exit**: Integrated immediate auto-save (`BuildingConfigItem.AutoSave()`) upon toggling any building or conditional sub-option, guaranteeing that deselecting buildings or pressing Exit/Return immediately saves to `config.json`.
+  - **Dedicated Save Button**: Added explicit **Save / 保存** button providing an immediate manual save trigger with visual `"Saved! / 已保存!"` status confirmation.
+  - **Batch Enable All / Disable All**: Added **Enable All / Disable All (启用全部 / 禁用全部)** batch toggle button to easily enable or disable all automated buildings in one click with real-time UI state synchronization.
+  - **Keyboard Escape Handling**: Intercepted `Escape` key via `OnKeyDown` to trigger `SaveAndClose()`, ensuring keyboard dismissal cleanly persists settings.
+  - **Options Dialog Hierarchy Defense**: Destroyed stale background `OptionsDialog` instances upon editor exit and reopened a fresh dialog via `OptionsScreenRefresher.Reopen()`, preventing stale dialog clones from overwriting newly saved configuration settings.
+
+- **Fabricator Mode Switching & Operational State Recovery (制造建筑模式切换与开关机自动恢复)**:
+  - **Eliminated 5 Hz UI Disturbance in Manual Mode**: Added `isAutomating` state tracking in `AutoWorkControllerBase`, ensuring `StopAutomation()` executes only once upon transitioning from automated to manual mode instead of spamming 5 times per second. This completely eliminates details side screen flickering and UI disturbance when reverting to manual.
+  - **Operational Active State Harmony**: Removed redundant `operational.SetActive` calls from `AutoFabricatorController`, allowing vanilla ONI to manage operational active states natively without mod conflict.
+  - **Clean Automated Mode Order Wake-up**: Synchronized `CancelChore`, `SetQueueDirty()`, and `RefreshAndStartNextOrder()` execution upon switching to automated mode, ensuring fabricators (like Sushi Bar, Electric Grill, Rock Crusher) immediately begin cooking and crafting without freezing.
+  - **Per-Building User Override Priority**: Fixed `AutoBuildingCustomizer.IsAutomatedFor` to strictly respect per-building player overrides (`hasUserOverride`) regardless of whether the building was globally toggled off in the editor.
+  - **Operational On/Off Watchdog in Sim1000ms**: Added self-healing watchdog in `ComplexFabricatorSim1000msPatch` that automatically refreshes the recipe queue and kicks off orders when an unattended fabricator becomes operational after being toggled off and on or restored after power loss.
+
 - **Building Configuration Editor Scope & Usability Refinements (建筑配置编辑器范围与易用性优化)**:
   - **Feature Separation**: Removed **Auto-Sweeper Harvest** (`SolidTransferArm`) and **Geyser Study** (`GeyserStudy`) from the Building Configuration Editor, keeping them strictly inside **Mod Options** under their respective dedicated feature sections (`CategoryAutoSweeper` and `CategoryResearch`).
   - **Virtual Planetarium Consolidation**: Consolidated `CosmicResearchCenter` and `DLC1CosmicResearchCenter` into a single clean `Virtual Planetarium` (`虚拟天象仪`) entry in the Building Configuration Editor, eliminating redundant `（原版）` and `（眼冒金星！）` duplicate entries while simultaneously controlling both vanilla and DLC automation controllers.

@@ -93,6 +93,10 @@ namespace AutoMachineRebuilt.Components
                 {
                     building.isManuallyOperated = false;
                 }
+                InvokeCancelChore(fabricator);
+                fabricator.SetQueueDirty();
+                InvokeRefreshAndStartNextOrder(fabricator);
+                fabricator.Trigger((int)GameHashes.FabricatorOrdersUpdated, fabricator);
                 Log.Verbose("Unattended production enabled for " + optionKey);
             }
 
@@ -163,7 +167,6 @@ namespace AutoMachineRebuilt.Components
                 if (!playingWorkAnim)
                 {
                     playingWorkAnim = true;
-                    SetActive(true);
                     StartAnimation();
                 }
 
@@ -173,7 +176,6 @@ namespace AutoMachineRebuilt.Components
             else if (playingWorkAnim)
             {
                 playingWorkAnim = false;
-                SetActive(false);
                 StopAnimation();
 
                 ToggleRadboltEmitter(false);
@@ -196,6 +198,28 @@ namespace AutoMachineRebuilt.Components
 
         private static readonly System.Reflection.MethodInfo FabricatorUpdateChoreMethod =
             HarmonyLib.AccessTools.Method(typeof(ComplexFabricator), "UpdateChore");
+        private static readonly System.Reflection.MethodInfo FabricatorCancelChoreMethod =
+            HarmonyLib.AccessTools.Method(typeof(ComplexFabricator), "CancelChore");
+        private static readonly System.Reflection.MethodInfo FabricatorRefreshAndStartNextOrderMethod =
+            HarmonyLib.AccessTools.Method(typeof(ComplexFabricator), "RefreshAndStartNextOrder");
+
+        public static void InvokeCancelChore(ComplexFabricator fab)
+        {
+            if (fab == null || FabricatorCancelChoreMethod == null) return;
+            SafeInvoke.Try("FabricatorCancelChore", delegate
+            {
+                FabricatorCancelChoreMethod.Invoke(fab, null);
+            });
+        }
+
+        public static void InvokeRefreshAndStartNextOrder(ComplexFabricator fab)
+        {
+            if (fab == null || FabricatorRefreshAndStartNextOrderMethod == null) return;
+            SafeInvoke.Try("FabricatorRefreshAndStartNextOrder", delegate
+            {
+                FabricatorRefreshAndStartNextOrderMethod.Invoke(fab, null);
+            });
+        }
 
         /// <summary>Restores the shipped behaviour when the option is turned off.</summary>
         public override void StopAutomation()
@@ -224,7 +248,6 @@ namespace AutoMachineRebuilt.Components
             if (playingWorkAnim)
             {
                 playingWorkAnim = false;
-                SetActive(false);
                 StopAnimation();
                 ToggleRadboltEmitter(false);
             }
@@ -234,8 +257,6 @@ namespace AutoMachineRebuilt.Components
                 progressBar.gameObject.DeleteObject();
                 progressBar = null;
             }
-
-            base.StopAutomation();
         }
 
         protected override void OnCleanUp()

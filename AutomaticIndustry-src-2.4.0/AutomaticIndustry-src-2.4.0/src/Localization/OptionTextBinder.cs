@@ -67,6 +67,8 @@ namespace AutoMachineRebuilt.Localization
             Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.INPUT.TEXT", Translations.Get("BUILDINGEDITOR.SEARCH_PLACEHOLDER", language));
             Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.SEARCHBAR.TEXT", Translations.Get("BUILDINGEDITOR.SEARCH_PLACEHOLDER", language));
             Strings.Add("STRINGS.UI.BUILDINGEDITOR.HORIZONTALLAYOUT.OBJECTLIST.FILTERS.FILTERBUTTON.TEXT", "");
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.BUTTONS.SAVEBUTTON.TEXT", Translations.Get("BUILDINGEDITOR.SAVE", language));
+            Strings.Add("STRINGS.UI.BUILDINGEDITOR.BUTTONS.TOGGLEALLBUILDINGSBUTTON.TEXT", Translations.Get("BUILDINGEDITOR.ENABLE_ALL", language));
 
             // Remember what the labels were built with, so the options dialog
             // is only rebuilt when the player really changed the language or

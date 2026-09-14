@@ -155,18 +155,14 @@ namespace AutoMachineRebuilt.Components
         public bool IsAutomatedFor(string targetPrefabId)
         {
             var options = AutoMachineOptions.Instance;
-            if (options == null || !options.EnableAllAutomation)
-            {
-                // Master switch is off
-                if (options != null && !AutoMachineOptions.IsEnabledFor(targetPrefabId))
-                {
-                    return false;
-                }
-            }
-
             if (options != null && options.EnablePerBuildingCustomization && hasUserOverride)
             {
                 return isAutomated;
+            }
+
+            if (options == null || options.EnableAllAutomation)
+            {
+                return true;
             }
 
             return AutoMachineOptions.IsEnabledFor(targetPrefabId);
@@ -609,15 +605,9 @@ namespace AutoMachineRebuilt.Components
                     BuildingComplete building = GetComponent<BuildingComplete>();
                     if (building != null) building.isManuallyOperated = false;
 
-                    var cancelChore = HarmonyLib.AccessTools.Method(typeof(ComplexFabricator), "CancelChore");
-                    if (cancelChore != null)
-                    {
-                        SafeInvoke.Try("AutoBuildingCustomizer CancelChore", delegate
-                        {
-                            cancelChore.Invoke(fabricator, null);
-                        });
-                    }
-
+                    AutoFabricatorController.InvokeCancelChore(fabricator);
+                    fabricator.SetQueueDirty();
+                    AutoFabricatorController.InvokeRefreshAndStartNextOrder(fabricator);
                     fabricator.Trigger((int)GameHashes.FabricatorOrdersUpdated, fabricator);
                 }
             }

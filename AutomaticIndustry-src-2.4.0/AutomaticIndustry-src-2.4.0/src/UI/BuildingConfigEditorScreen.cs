@@ -35,6 +35,10 @@ namespace AutoMachineRebuilt.UI
         private FToggle BuildingEnabledToggle;
         private FButton ResetSingleBuilding;
         private LocText ToggleAllButtonText;
+        private FButton SaveButton;
+        private LocText SaveButtonText;
+        private FButton ToggleAllBuildingsButton;
+        private LocText ToggleAllBuildingsButtonText;
 
         public BuildingConfigItem SelectedBuilding;
 
@@ -162,7 +166,12 @@ namespace AutoMachineRebuilt.UI
                         {
                             try
                             {
-                                dialog.SetActive(true);
+                                KScreen kScreen = dialog.GetComponent<KScreen>();
+                                if (kScreen != null)
+                                {
+                                    kScreen.Deactivate();
+                                }
+                                UnityEngine.Object.Destroy(dialog);
                             }
                             catch { }
                         }
@@ -273,7 +282,8 @@ namespace AutoMachineRebuilt.UI
             if (initialized) return;
             initialized = true;
 
-            // 1. Close and Reset All Buttons
+            // 1. Close, Reset All, Save, and Toggle All Buttons
+            Transform tButtons = transform.Find("Buttons");
             Transform tClose = transform.Find("Buttons/CloseButton");
             if (tClose != null)
             {
@@ -298,6 +308,37 @@ namespace AutoMachineRebuilt.UI
                 {
                     TryResetAll();
                 };
+            }
+
+            if (tClose != null && tButtons != null)
+            {
+                // Create ToggleAllBuildingsButton (Enable All / Disable All)
+                GameObject toggleAllGO = global::Util.KInstantiateUI(tClose.gameObject, tButtons.gameObject, true);
+                toggleAllGO.name = "ToggleAllBuildingsButton";
+                ToggleAllBuildingsButtonText = toggleAllGO.GetComponentInChildren<LocText>();
+                ToggleAllBuildingsButton = toggleAllGO.GetComponent<FButton>() ?? toggleAllGO.AddComponent<FButton>();
+                ToggleAllBuildingsButton.OnClick += delegate
+                {
+                    ToggleAllBuildings();
+                };
+                UIUtils.AddSimpleTooltipToObject(toggleAllGO, Translations.Get("BUILDINGEDITOR.BATCH_TOGGLE_TOOLTIP"));
+
+                // Create SaveButton (Save / 保存)
+                GameObject saveGO = global::Util.KInstantiateUI(tClose.gameObject, tButtons.gameObject, true);
+                saveGO.name = "SaveButton";
+                SaveButtonText = saveGO.GetComponentInChildren<LocText>();
+                SaveButton = saveGO.GetComponent<FButton>() ?? saveGO.AddComponent<FButton>();
+                SaveButton.OnClick += delegate
+                {
+                    SaveSettings();
+                };
+                UIUtils.AddSimpleTooltipToObject(saveGO, Translations.Get("BUILDINGEDITOR.SAVE_TOOLTIP"));
+
+                // Visual layout order: [Toggle All] [Reset All] [Save] [Close]
+                toggleAllGO.transform.SetSiblingIndex(0);
+                if (tResetAll != null) tResetAll.SetSiblingIndex(1);
+                saveGO.transform.SetSiblingIndex(2);
+                tClose.SetSiblingIndex(3);
             }
 
             // 2. Outline (List) Entry Prefab & Container
@@ -456,6 +497,14 @@ namespace AutoMachineRebuilt.UI
                     resetAllText.SetText(Translations.Get("BUILDINGEDITOR.RESET_ALL"));
                 }
             }
+
+            if (SaveButtonText != null)
+            {
+                SaveButtonText.key = string.Empty;
+                SaveButtonText.SetText(Translations.Get("BUILDINGEDITOR.SAVE"));
+            }
+
+            UpdateBatchToggleButtonText();
 
             // 3. Search Bar Placeholder
             Transform tSearchInput = transform.Find("HorizontalLayout/ObjectList/SearchBar/Input");
@@ -727,6 +776,9 @@ namespace AutoMachineRebuilt.UI
                     BuildingEnabledToggle.SetOnFromCode(on);
                 }
             }
+
+            BuildingConfigItem.AutoSave();
+            UpdateBatchToggleButtonText();
         }
 
         public void RefreshAllEntries()
@@ -913,6 +965,52 @@ namespace AutoMachineRebuilt.UI
             }
 
             Show(false);
+        }
+
+        public void SaveSettings()
+        {
+            try
+            {
+                BuildingConfigItem.AutoSave();
+                if (SaveButtonText != null)
+                {
+                    SaveButtonText.SetText(Translations.Get("BUILDINGEDITOR.SAVED"));
+                }
+                Log.Info("Saved building automation options successfully to config.json");
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Failed to save options to config.json: ", ex);
+            }
+        }
+
+        public void ToggleAllBuildings()
+        {
+            bool allEnabled = BuildingConfigRegistry.AreAllEnabled();
+            BuildingConfigRegistry.SetAllEnabled(!allEnabled);
+            RefreshAllEntries();
+            RefreshDetails();
+            UpdateBatchToggleButtonText();
+        }
+
+        private void UpdateBatchToggleButtonText()
+        {
+            if (ToggleAllBuildingsButtonText != null)
+            {
+                bool allEnabled = BuildingConfigRegistry.AreAllEnabled();
+                ToggleAllBuildingsButtonText.key = string.Empty;
+                ToggleAllBuildingsButtonText.SetText(Translations.Get(allEnabled ? "BUILDINGEDITOR.DISABLE_ALL" : "BUILDINGEDITOR.ENABLE_ALL"));
+            }
+        }
+
+        public override void OnKeyDown(KButtonEvent e)
+        {
+            if (e.TryConsume(Action.Escape))
+            {
+                SaveAndClose();
+                return;
+            }
+            base.OnKeyDown(e);
         }
     }
 }

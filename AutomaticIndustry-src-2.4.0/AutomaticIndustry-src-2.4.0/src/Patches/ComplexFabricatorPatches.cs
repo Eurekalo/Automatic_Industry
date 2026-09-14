@@ -1,6 +1,7 @@
 // Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
+using AutoMachineRebuilt.Components;
 using AutoMachineRebuilt.Config;
 using AutoMachineRebuilt.Util;
 using HarmonyLib;
@@ -65,9 +66,10 @@ namespace AutoMachineRebuilt.Patches
     }
 
     /// <summary>
-    /// Self-healing chore creation for manual mode: if a ComplexFabricator is in manual mode
-    /// (duplicantOperated == true) and has a working order waiting, ensure the WorkChore is created
-    /// so Duplicants are immediately summoned to operate the machine.
+    /// Self-healing order and chore watchdog:
+    /// 1. If in manual mode (duplicantOperated == true) and has a working order waiting, ensures WorkChore is active.
+    /// 2. If in automated mode (!duplicantOperated) and operational without a current working order, ensures queue is dirty
+    ///    and starts next queued order so unattended machines recover seamlessly after power/toggle on-off cycles.
     /// </summary>
     [HarmonyPatch(typeof(ComplexFabricator), "Sim1000ms")]
     internal static class ComplexFabricatorSim1000msPatch
@@ -82,12 +84,16 @@ namespace AutoMachineRebuilt.Patches
             if (__instance == null) return;
 
             // Only run for machines with a valid workable component
-            if (__instance.duplicantOperated && __instance.GetComponent<ComplexFabricatorWorkable>() != null && __instance.CurrentWorkingOrder != null)
+            if (__instance.GetComponent<ComplexFabricatorWorkable>() == null) return;
+
+            SafeInvoke.Try("ComplexFabricatorSim1000msPatch", delegate
             {
-                SafeInvoke.Try("ComplexFabricatorSim1000msPatch", delegate
+                Operational op = __instance.GetComponent<Operational>();
+                if (op == null || !op.IsOperational) return;
+
+                if (__instance.duplicantOperated)
                 {
-                    Operational op = __instance.GetComponent<Operational>();
-                    if (op != null && op.IsOperational)
+                    if (__instance.CurrentWorkingOrder != null)
                     {
                         Chore currentChore = ChoreField != null ? ChoreField.GetValue(__instance) as Chore : null;
                         if (currentChore == null && UpdateChoreMethod != null)
@@ -95,8 +101,17 @@ namespace AutoMachineRebuilt.Patches
                             UpdateChoreMethod.Invoke(__instance, null);
                         }
                     }
-                });
-            }
+                }
+                else
+                {
+                    // Automated mode: if idle, refresh queue and start next order
+                    if (__instance.CurrentWorkingOrder == null)
+                    {
+                        __instance.SetQueueDirty();
+                        AutoFabricatorController.InvokeRefreshAndStartNextOrder(__instance);
+                    }
+                }
+            });
         }
     }
 }

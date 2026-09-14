@@ -52,6 +52,7 @@ namespace AutoMachineRebuilt.Components
         private bool brokenOut;
         private int failures;
         private float accumulator;
+        private bool isAutomating;
 
         /// <summary>Seconds spent in the broken out state.</summary>
         private float recoveryTimer;
@@ -107,9 +108,15 @@ namespace AutoMachineRebuilt.Components
 
             if (!AutoMachineOptions.IsEnabledFor(gameObject, optionKey))
             {
-                StopAutomation();
+                if (isAutomating)
+                {
+                    isAutomating = false;
+                    StopAutomation();
+                }
                 return;
             }
+
+            isAutomating = true;
 
             if (!prepared)
             {
@@ -178,6 +185,7 @@ namespace AutoMachineRebuilt.Components
         /// <summary>Releases everything the automation may have started.</summary>
         public virtual void StopAutomation()
         {
+            isAutomating = false;
             SetActive(false);
             StopAnimation();
         }
@@ -192,6 +200,7 @@ namespace AutoMachineRebuilt.Components
             // returns the animation to idle and leaves the operational flag to
             // the game.
             tearingDown = true;
+            isAutomating = false;
             SafeInvoke.Try("cleaning up " + optionKey, StopAnimation);
             base.OnCleanUp();
         }
