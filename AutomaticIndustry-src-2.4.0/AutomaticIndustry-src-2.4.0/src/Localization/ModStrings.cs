@@ -97,6 +97,7 @@ namespace AutoMachineRebuilt
                     public static LocString CANCEL_TOGGLE_TOOLTIP = "Cancel the pending automation upgrade task.";
                     public static LocString RESET_OVERRIDE = "Follow Global Setting";
                     public static LocString RESET_OVERRIDE_TOOLTIP = "Clear individual customization on this machine and sync with global mod settings.";
+                    public static LocString INSTANT_TOGGLE_HINT = "Shift + Left Click: Instantly toggle mode without Duplicant chore.";
                     public static LocString MOD_SOURCE_TAG = "\n\n<color=#4BC5FF><b>[Mod: Automatic Industry]</b></color>";
                 }
 

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using AutoMachineRebuilt.Automation;
 using AutoMachineRebuilt.Config;
 using AutoMachineRebuilt.Integration.Multiplayer;
@@ -198,11 +199,17 @@ namespace AutoMachineRebuilt.Components
 
         private static string GetFormattedTooltip(string baseTooltip, string explanation, string tag)
         {
-            if (!string.IsNullOrEmpty(explanation))
-            {
-                return baseTooltip + "\n\n" + explanation + "\n\n" + tag;
-            }
-            return baseTooltip + "\n\n" + tag;
+            return GetFormattedTooltip(baseTooltip, explanation, null, tag);
+        }
+
+        private static string GetFormattedTooltip(string baseTooltip, string explanation, string shortcutHint, string tag)
+        {
+            List<string> parts = new List<string>();
+            if (!string.IsNullOrEmpty(baseTooltip)) parts.Add(baseTooltip);
+            if (!string.IsNullOrEmpty(explanation)) parts.Add(explanation);
+            if (!string.IsNullOrEmpty(shortcutHint)) parts.Add(shortcutHint);
+            if (!string.IsNullOrEmpty(tag)) parts.Add(tag);
+            return string.Join("\n\n", parts);
         }
 
         private void OnRefreshUserMenu(object data)
@@ -217,6 +224,9 @@ namespace AutoMachineRebuilt.Components
             var tr = Translations.For(lang);
 
             string explanation = GetBuildingExplanation(prefabId, lang);
+            string shortcutHint = tr.ContainsKey("UI.USERMENUACTIONS.INSTANT_TOGGLE_HINT")
+                ? tr["UI.USERMENUACTIONS.INSTANT_TOGGLE_HINT"]
+                : "Shift + Left Click: Instantly toggle mode without Duplicant chore.";
             string modSourceTag = tr.ContainsKey("UI.USERMENUACTIONS.MOD_SOURCE_TAG")
                 ? tr["UI.USERMENUACTIONS.MOD_SOURCE_TAG"]
                 : "<color=#4BC5FF><b>[Mod: Automatic Industry]</b></color>";
@@ -255,7 +265,7 @@ namespace AutoMachineRebuilt.Components
                     string disableTooltipRaw = tr.ContainsKey("UI.USERMENUACTIONS.DISABLE_AUTOMATION.TOOLTIP")
                         ? tr["UI.USERMENUACTIONS.DISABLE_AUTOMATION.TOOLTIP"]
                         : "Revert this machine back to vanilla manual duplicant operation.";
-                    string manualTooltip = GetFormattedTooltip(disableTooltipRaw, explanation, modSourceTag);
+                    string manualTooltip = GetFormattedTooltip(disableTooltipRaw, explanation, shortcutHint, modSourceTag);
 
                     KIconButtonMenu.ButtonInfo manualBtn = new KIconButtonMenu.ButtonInfo(
                         "action_repair",
@@ -278,7 +288,7 @@ namespace AutoMachineRebuilt.Components
                     string enableTooltipRaw = tr.ContainsKey("UI.USERMENUACTIONS.ENABLE_AUTOMATION.TOOLTIP")
                         ? tr["UI.USERMENUACTIONS.ENABLE_AUTOMATION.TOOLTIP"]
                         : "Upgrade this machine to operate unattended without duplicants.";
-                    string autoTooltip = GetFormattedTooltip(enableTooltipRaw, explanation, modSourceTag);
+                    string autoTooltip = GetFormattedTooltip(enableTooltipRaw, explanation, shortcutHint, modSourceTag);
 
                     KIconButtonMenu.ButtonInfo autoBtn = new KIconButtonMenu.ButtonInfo(
                         "action_power",

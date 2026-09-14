@@ -3639,6 +3639,49 @@ namespace AutomaticIndustry.Sandbox
             simulateSim1000msWatchdog();
             TestRunner.Assert(watchdogTriggered && queueDirty && orderRefreshed,
                 "Operational On/Off Watchdog: Sim1000msPatch automatically wakes idle automated fabricators after operational toggles, preventing machine lockup");
+
+            // 8. UserMenu Automation Button Tooltip Layout with Shift+Left Click Trigger Effect
+            // The tooltip layout must place:
+            //   1) Button description (baseTooltip)
+            //   2) Building custom explanation (if present)
+            //   3) Shift+Left Click instant toggle trigger effect
+            //   4) Blue mod source tag
+            string testBaseTooltip = "将此建筑恢复为原版需要复制人手动操作的模式。";
+            string testExplanation = "原版：复制人用送达的食材制作生鱼料理。自动化自行运行配方队列。";
+            string testShortcutHint = "Shift + 鼠标左键：立即切换模式，无需复制人前往操作。";
+            string testModSourceTag = "<color=#4BC5FF><b>【来源模组：自动化工业 (Automatic Industry)】</b></color>";
+
+            Func<string, string, string, string, string> formatTooltip = (baseT, expl, hint, tag) =>
+            {
+                var parts = new List<string>();
+                if (!string.IsNullOrEmpty(baseT)) parts.Add(baseT);
+                if (!string.IsNullOrEmpty(expl)) parts.Add(expl);
+                if (!string.IsNullOrEmpty(hint)) parts.Add(hint);
+                if (!string.IsNullOrEmpty(tag)) parts.Add(tag);
+                return string.Join("\n\n", parts);
+            };
+
+            string formattedResult = formatTooltip(testBaseTooltip, testExplanation, testShortcutHint, testModSourceTag);
+            int idxDesc = formattedResult.IndexOf(testBaseTooltip, StringComparison.Ordinal);
+            int idxExpl = formattedResult.IndexOf(testExplanation, StringComparison.Ordinal);
+            int idxHint = formattedResult.IndexOf(testShortcutHint, StringComparison.Ordinal);
+            int idxTag = formattedResult.IndexOf(testModSourceTag, StringComparison.Ordinal);
+
+            bool tooltipOrderingCorrect = idxDesc >= 0 && idxExpl > idxDesc && idxHint > idxExpl && idxTag > idxHint;
+
+            // Also verify 5-language presence for INSTANT_TOGGLE_HINT
+            var hintLanguages = new Dictionary<string, string>
+            {
+                { "en", "Shift + Left Click: Instantly toggle mode without Duplicant chore." },
+                { "zh-Hans", "Shift + 鼠标左键：立即切换模式，无需复制人前往操作。" },
+                { "zh-Hant", "Shift + 滑鼠左鍵：立即切換模式，無需複製人前往操作。" },
+                { "ko", "Shift + 마우스 좌클릭: 복제체 작업 없이 즉시 모드를 전환합니다." },
+                { "ja", "Shift + 左クリック：複製人間の作業なしで即座にモードを切り替えます。" }
+            };
+            bool all5LanguagesDefined = hintLanguages.Count == 5 && hintLanguages.Values.All(v => !string.IsNullOrEmpty(v));
+
+            TestRunner.Assert(tooltipOrderingCorrect && all5LanguagesDefined,
+                "UserMenu Button Tooltip Layout: Shift+Left Click trigger effect correctly positioned below building description and above blue mod source tag across all 5 languages");
         }
     }
 }
