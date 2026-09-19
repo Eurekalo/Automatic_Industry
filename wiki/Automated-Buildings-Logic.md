@@ -174,17 +174,21 @@ flowchart TD
   2. **Automated Pitchfork Flipping**: When the compost becomes `inert`, starts an automated 10-second flip cycle with a **Sky Blue progress bar**. Displays countdown timer in the building status item.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Composting: Input Polluted Dirt Stocked
-    Composting --> Inert: Conversion Progresses to 100%
+flowchart TD
+    Start(["Input Polluted Dirt Stocked"]) --> Composting["<b>Composting State</b><br/>Decomposition Progress 0% to 100%"]
+    Composting -->|Conversion Complete| Inert["<b>Inert State</b><br/>Awaiting Aeration"]
     
-    state Inert {
-        [*] --> AutoFlipping: Start 10s Flip Timer
-        AutoFlipping --> AutoFlipping: Render Sky Blue Progress Bar
-        AutoFlipping --> Flipped: Timer Reaches 10s
-    }
+    subgraph AutoFlipCycle ["Automated Flipping Cycle"]
+        Inert --> Flip["<b>Auto-Flip in Progress</b><br/>10-Second Timer with Sky Blue Progress Bar"]
+        Flip -->|Timer Reaches 10s| CleanDirt["<b>Clean Dirt Produced</b><br/>Reset State Machine"]
+    end
     
-    Flipped --> Composting: Reset State Machine & Clean Dirt Ready
+    CleanDirt --> Composting
+
+    style Composting fill:#22543d,stroke:#38a169,color:#fff
+    style Inert fill:#7b341e,stroke:#dd6b20,color:#fff
+    style Flip fill:#2b6cb0,stroke:#1a365d,color:#fff
+    style CleanDirt fill:#44337a,stroke:#805ad5,color:#fff
 ```
 
 ---

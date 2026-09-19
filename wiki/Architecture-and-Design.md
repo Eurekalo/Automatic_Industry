@@ -175,29 +175,29 @@ To protect the game simulation from edge cases, every automation controller inhe
 - **`RecoveryLimit = 5`**: If the building fails recovery 5 times in a row, automation permanently disengages for that instance, leaving it in normal vanilla manual operation.
 
 ```mermaid
-stateDiagram-v2
-    [*] --> ActiveAutomation: Building Spawned / Automation Enabled
-    ActiveAutomation --> ActiveAutomation: Step(dt) Successful (5Hz)
+flowchart TD
+    Init(["Building Spawned / Automation Enabled"]) --> Active["<b>Active Automation</b> (5Hz Tick)"]
     
-    state ActiveAutomation {
-        [*] --> CheckDupe
-        CheckDupe --> YieldDupe: Dupe Operating
-        YieldDupe --> CheckDupe: Dupe Steps Away
-        CheckDupe --> CheckConditions: No Dupe
-        CheckConditions --> DoWork: Power/Input OK
-        CheckConditions --> Idle: Lacks Power/Input
-    }
+    subgraph OperationalLoop ["Operational Automation Loop"]
+        Active --> CheckDupe{"Duplicant Operating?"}
+        CheckDupe -->|Yes| Yield["Yield to Duplicant"]
+        Yield --> CheckDupe
+        CheckDupe -->|No| CheckCond{"Power & Ingredients OK?"}
+        CheckCond -->|Yes| DoWork["Execute Automation Step"]
+        CheckCond -->|No| Idle["Standby / Idle"]
+        DoWork --> Active
+    end
     
-    ActiveAutomation --> TrippedCircuitBreaker: 3 Consecutive Exceptions (SafeInvoke)
-    TrippedCircuitBreaker --> VanillaManualMode: Safe Stop Animation & Release Operational
-    VanillaManualMode --> RecoveryWait: 60-Second Cooldown
-    RecoveryWait --> ActiveAutomation: Try Recover (Attempt < 5)
-    RecoveryWait --> PermanentManualFallback: Attempt >= 5 (Permanent Fallback)
+    Active -->|3 Consecutive Exceptions| Trip["<b>Circuit Breaker Tripped</b><br/>Safe Stop Animation & Release Operational"]
+    Trip --> Cooldown["<b>60-Second Cooldown</b><br/>Vanilla Manual Mode Only"]
+    Cooldown --> Retry{"Recovery Attempts < 5?"}
+    Retry -->|Yes| Active
+    Retry -->|No| PermManual["<b>Permanent Manual Fallback</b><br/>Automation Disengaged Safely"]
 
-    style ActiveAutomation fill:#22543d,stroke:#38a169,color:#fff
-    style TrippedCircuitBreaker fill:#742a2a,stroke:#e53e3e,color:#fff
-    style VanillaManualMode fill:#7b341e,stroke:#dd6b20,color:#fff
-    style PermanentManualFallback fill:#4a5568,stroke:#a0aec0,color:#fff
+    style Active fill:#22543d,stroke:#38a169,color:#fff
+    style Trip fill:#742a2a,stroke:#e53e3e,color:#fff
+    style Cooldown fill:#7b341e,stroke:#dd6b20,color:#fff
+    style PermManual fill:#4a5568,stroke:#a0aec0,color:#fff
 ```
 
 ---

@@ -111,7 +111,7 @@ flowchart TD
     B --> C{"Multilingual Matching"}
     C -->|Delegate Reflection| D["bi.onClick.Method.Name == 'OnOptions'"]
     C -->|Localized Constants| E["STRINGS.UI.FRONTEND.PAUSE_SCREEN.OPTIONS"]
-    C -->|Multilingual Keywords| F["Options / 設定 / 설정 / 选项"]
+    C -->|Multilingual Keywords| F["Options in All Languages"]
     
     D --> G["Insert Mod Menu Button at optionsIndex + 1"]
     E --> G
