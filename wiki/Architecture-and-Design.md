@@ -9,24 +9,17 @@ This document details the architectural foundation, design patterns, and enginee
 Automatic Industry is engineered from the ground up to guarantee maximum stability, mod compatibility, and game performance:
 
 ```mermaid
-mindmap
-  root((Engineering Principles))
-    Passive Component Injection
-      No brittle Harmony IL transpilers
-      Pure Unity KMonoBehaviour components
-      Attached to completed prefabs
-    Zero Save-Data Footprint
-      No custom serialized fields in .sav
-      No custom entity prefabs
-      Safe to install/remove mid-game
-    Duplicant Priority
-      Duplicant always wins
-      Instant yield on manual command
-      Clean resumption after duplicant finishes
-    Circuit Breakers & SafeInvoke
-      All controller ticks try-catch guarded
-      5Hz evaluation rate (0.2s cadence)
-      Graceful degradation to manual on errors
+flowchart TD
+    Root["<b>Core Engineering Principles</b>"] --> P1["<b>Passive Component Injection</b><br/>• No brittle Harmony IL transpilers<br/>• Pure Unity KMonoBehaviour components<br/>• Attached to completed prefabs"]
+    Root --> P2["<b>Zero Save-Data Footprint</b><br/>• No custom serialized fields in .sav<br/>• No custom entity prefabs<br/>• Safe to install/remove mid-game"]
+    Root --> P3["<b>Duplicant Priority</b><br/>• Duplicant always wins<br/>• Instant yield on manual command<br/>• Clean resumption after duplicant finishes"]
+    Root --> P4["<b>Circuit Breakers & SafeInvoke</b><br/>• All controller ticks try-catch guarded<br/>• 5Hz evaluation rate (0.2s cadence)<br/>• Graceful degradation to manual on errors"]
+    
+    style Root fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style P1 fill:#2d3748,stroke:#4a5568,color:#fff
+    style P2 fill:#22543d,stroke:#38a169,color:#fff
+    style P3 fill:#7b341e,stroke:#dd6b20,color:#fff
+    style P4 fill:#742a2a,stroke:#e53e3e,color:#fff
 ```
 
 1. **Passive Component Injection over Brittle Transpilers**:
@@ -57,23 +50,23 @@ Vanilla *Oxygen Not Included* loads buildings through individual `IBuildingConfi
 
 ```mermaid
 graph TD
-    A[Game Startup: GeneratedBuildings.LoadGeneratedBuildings] -->|Harmony Postfix| B[BuildingPrefabInjection.Postfix]
-    B --> C[Run Mod Compatibility Shims]
-    C --> D[Iterate Assets.BuildingDefs]
-    D --> E{Check Building Mechanism}
+    A["Game Startup: GeneratedBuildings.LoadGeneratedBuildings"] -->|Harmony Postfix| B["BuildingPrefabInjection.Postfix"]
+    B --> C["Run Mod Compatibility Shims"]
+    C --> D["Iterate Assets.BuildingDefs"]
+    D --> E{"Check Building Mechanism"}
     
-    E -->|ComplexFabricator + Workable| F[Attach AutoFabricatorController]
-    E -->|AutomationRegistry Match| G[Attach Specific Controller]
-    E -->|Specialized Prefab ID| H[Attach Custom Controller: OilRefinery, WellCap, Compost]
-    E -->|SolidTransferArm| I[Attach AutoSweeperHarvestController]
+    E -->|ComplexFabricator + Workable| F["Attach AutoFabricatorController"]
+    E -->|AutomationRegistry Match| G["Attach Specific Controller"]
+    E -->|Specialized Prefab ID| H["Attach Custom Controller: OilRefinery, WellCap, Compost"]
+    E -->|SolidTransferArm| I["Attach AutoSweeperHarvestController"]
     
-    F --> J[Attach AutoBuildingCustomizer]
+    F --> J["Attach AutoBuildingCustomizer"]
     G --> J
     H --> J
     I --> J
     
-    J --> K[Attach SymbolOverrideController if Missing]
-    K --> L[ColonyAutomationMasterRegistry on SaveGame]
+    J --> K["Attach SymbolOverrideController if Missing"]
+    K --> L["ColonyAutomationMasterRegistry on SaveGame"]
 
     style A fill:#2d3748,stroke:#4a5568,color:#fff
     style B fill:#1a365d,stroke:#2b6cb0,color:#fff
@@ -108,18 +101,18 @@ sequenceDiagram
     participant Controller as AutoWorkControllerBase
 
     alt Normal Left Click (Instant Toggle Enabled)
-        Player->>UI: Left Click [Automation Button]
+        Player->>UI: Left Click Automation Button
         UI->>ABC: ToggleMode()
         ABC->>Controller: Apply Enabled/Disabled State
     else Normal Left Click (Instant Toggle Disabled)
-        Player->>UI: Left Click [Automation Button]
+        Player->>UI: Left Click Automation Button
         UI->>ABC: QueueToggleErrand()
         ABC->>Workable: Create Chore (Building/Operating)
         Dupe->>Workable: Visit with Wrench & Play Animation
         Workable->>ABC: OnCompleteWork()
         ABC->>Controller: Apply Enabled/Disabled State
     else Shift + Left Click (Instant Override)
-        Player->>UI: Shift + Left Click [Automation Button]
+        Player->>UI: Shift + Left Click Automation Button
         UI->>ABC: ForceImmediateToggle()
         ABC->>Controller: Instantly Flip State (Bypasses Wrench Errand)
     end
@@ -151,13 +144,13 @@ sequenceDiagram
 
     Note over Mod: AutoWorkControllerBase Tick (5Hz)
     Mod->>Engine: CancelOperateChores(gameObject)
-    Note right of Mod: Filters & Cancels:<br/>• ChoreTypes.Cook<br/>• ChoreTypes.Fabricate<br/>• ChoreTypes.Operate<br/>• RanchStation.Instance
+    Note right of Mod: Filters & Cancels:<br>• ChoreTypes.Cook<br>• ChoreTypes.Fabricate<br>• ChoreTypes.Operate<br>• RanchStation.Instance
     
     Note over Engine: Logistics Errands Preserved
     Engine-->>Sweeper: Assign FabricateFetch / MachineFetch
     Engine-->>Dupe: Assign EmptyStorage / Supply
     
-    Note over Dupe,Sweeper: Duplicants supply raw materials;<br/>Robotic arms fetch and store goods;<br/>No wasted Dupe running time!
+    Note over Dupe,Sweeper: Duplicants supply raw materials<br>Robotic arms fetch and store goods<br>Zero wasted Duplicant running time
 ```
 
 ### Station Precondition Suppression (`StationChoreSuppressionPatches`)
@@ -215,21 +208,21 @@ In **v2.5.0**, the UI system was refactored to prevent rendering conflicts and c
 
 ```mermaid
 graph TD
-    subgraph Unity Screen Layering
-        A[Base HUD / World Canvas: sortingOrder 0-100]
-        B[Pause Screen / FrontEnd: sortingOrder 200]
-        C[ModMenu Pause Dialog: sortingOrder 250-300]
-        D[Automatic Industry Building Configuration Editor: sortingOrder 350]
+    subgraph Layering ["Unity Screen Layering"]
+        A["Base HUD / World Canvas (sortingOrder 0-100)"]
+        B["Pause Screen / FrontEnd (sortingOrder 200)"]
+        C["ModMenu Pause Dialog (sortingOrder 250-300)"]
+        D["Automatic Industry Building Configuration Editor (sortingOrder 350)"]
     end
 
-    C -->|Open Configuration| E[BuildingConfigEditorScreen.Show()]
-    E --> F[Push Dialog to DialogStack]
-    F --> G[Temporarily Hide Background ModMenu Window]
+    C -->|Open Configuration| E["BuildingConfigEditorScreen.Show()"]
+    E --> F["Push Dialog to DialogStack"]
+    F --> G["Temporarily Hide Background ModMenu Window"]
     G --> D
     
-    D -->|Click Exit or Close| H[Save Changes to Disk]
-    H --> I[Pop Dialog from DialogStack]
-    I --> J[Restore Background ModMenu Window]
+    D -->|Click Exit or Close| H["Save Changes to Disk"]
+    H --> I["Pop Dialog from DialogStack"]
+    I --> J["Restore Background ModMenu Window"]
 ```
 
 - **Explicit Canvas Sorting (`sortingOrder = 350`)**: Ensures the Building Configuration Editor is always rendered in front of both the game's pause menu and ModMenu's configuration list.

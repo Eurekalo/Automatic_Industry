@@ -18,16 +18,17 @@
 
 ```mermaid
 flowchart LR
-    A[Auto-Sweeper Scans Range] --> B{Plant Maturity == 100%?}
-    B -->|Yes| C{Dual-Cell Reachable?}
-    C -->|Yes| D[Trigger Plant Harvest]
-    D --> E[Drop Crops & Seeds for Conveyor Loader]
+    A["Auto-Sweeper Scans Range"] --> B{"Plant Maturity == 100%?"}
+    B -->|Yes| C{"Dual-Cell Reachable?"}
+    C -->|Yes| D["Trigger Plant Harvest"]
+    D --> E["Drop Crops and Seeds for Conveyor Loader"]
     
-    subgraph Engine Safety Shield
-        F[Robotic Arm Multi-Tool Anim Suppressed]
-        G[Missing SymbolOverrideController Auto-Injected]
+    subgraph SafetyShield ["Engine Safety Shield"]
+        F["Robotic Arm Multi-Tool Anim Suppressed"]
+        G["Missing SymbolOverrideController Auto-Injected"]
     end
-    D -.-> Engine Safety Shield
+    D -.-> F
+    D -.-> G
 ```
 
 - **Modernized Architecture in Automatic Industry**:
@@ -46,18 +47,18 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Liquid Reservoir Storing Liquid] --> B{Fetch Requested}
-    B -->|Auto-Sweeper Supply / Fetch| C[IsInsideArmFetch Thread Context: Allow Pickup]
-    B -->|Duplicant Manual Delivery| D{Independent Option Enabled?}
-    D -->|Yes| E[Allow Dupe Fetch]
-    D -->|No| F[Prevent Dupe Fetch]
+    A["Liquid Reservoir Storing Liquid"] --> B{"Fetch Requested"}
+    B -->|Auto-Sweeper Supply / Fetch| C["IsInsideArmFetch Thread Context: Allow Pickup"]
+    B -->|Duplicant Manual Delivery| D{"Independent Option Enabled?"}
+    D -->|Yes| E["Allow Dupe Fetch"]
+    D -->|No| F["Prevent Dupe Fetch"]
     
-    subgraph Zero Save Footprint
-        G[Non-invasive Harmony Patches Only]
-        H[Zero Custom Components Saved to .sav]
+    subgraph ZeroSave ["Zero Save Footprint"]
+        G["Non-invasive Harmony Patches Only"]
+        H["Zero Custom Components Saved to .sav"]
     end
-    C -.-> Zero Save Footprint
-    E -.-> Zero Save Footprint
+    C -.-> G
+    E -.-> G
 ```
 
 - **Modernized Architecture in Automatic Industry**:

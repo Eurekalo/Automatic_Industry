@@ -59,16 +59,16 @@ Every automated building placed in your colony features an interactive automatio
 
 ```mermaid
 graph TD
-    A[Player Selects Building] --> B[Building Details Panel Displays]
-    B --> C{Player Click Action}
-    C -->|Normal Left Click| D{Instant Toggle Enabled in Mod Options?}
-    D -->|Yes| E[Instantly Flip Automation State]
-    D -->|No| F[Queue Duplicant Wrench Errand: AutomationToggleWorkable]
-    F --> G[Duplicant with Operating/Building Skill Arrives]
+    A["Player Selects Building"] --> B["Building Details Panel Displays"]
+    B --> C{"Player Click Action"}
+    C -->|Normal Left Click| D{"Instant Toggle Enabled in Mod Options?"}
+    D -->|Yes| E["Instantly Flip Automation State"]
+    D -->|No| F["Queue Duplicant Wrench Errand: AutomationToggleWorkable"]
+    F --> G["Duplicant with Operating or Building Skill Arrives"]
     G --> E
     C -->|Shift + Left Click| E
-    E --> H[Update Building State: Auto vs Manual]
-    H --> I[Refresh Button Icon & Tooltip Text]
+    E --> H["Update Building State: Auto vs Manual"]
+    H --> I["Refresh Button Icon and Tooltip Text"]
 
     style A fill:#2d3748,stroke:#4a5568,color:#fff
     style C fill:#44337a,stroke:#805ad5,color:#fff
@@ -109,18 +109,18 @@ When an automated building evaluates whether it is allowed to run, it resolves s
 
 ```mermaid
 flowchart TD
-    A[Building Simulation Tick] --> B{Instance Override in AutoBuildingCustomizer?}
-    B -->|User explicitly toggled this building| C[Use Instance Setting]
-    B -->|No instance override| D{Colony Master Registry Setting?}
-    D -->|Set via colony batch tool| E[Use Colony Registry Setting]
-    D -->|No colony override| F[Use Global Mod Options Setting]
+    A["Building Simulation Tick"] --> B{"Instance Override in AutoBuildingCustomizer?"}
+    B -->|User explicitly toggled this building| C["Use Instance Setting"]
+    B -->|No instance override| D{"Colony Master Registry Setting?"}
+    D -->|Set via colony batch tool| E["Use Colony Registry Setting"]
+    D -->|No colony override| F["Use Global Mod Options Setting"]
     
-    C --> G{Automation Active?}
+    C --> G{"Automation Active?"}
     E --> G
     F --> G
     
-    G -->|True| H[Run Automation Loop]
-    G -->|False| I[Vanilla Manual Operation Only]
+    G -->|True| H["Run Automation Loop"]
+    G -->|False| I["Vanilla Manual Operation Only"]
 
     style B fill:#1a365d,stroke:#2b6cb0,color:#fff
     style D fill:#2d3748,stroke:#4a5568,color:#fff

@@ -56,14 +56,14 @@ This document is the definitive technical reference for every automated building
 
 ```mermaid
 flowchart TD
-    A[AutoManualGeneratorController 5Hz Tick] --> B{Duplicant Worker Operating?}
-    B -->|Yes| C[Yield to Duplicant: Duplicant Always Wins]
-    B -->|No| D{Battery Grid Saturated?}
-    D -->|Yes: Batteries 100%| E[Stop Wheel Animation & Set Idle]
-    D -->|No: Power Needed| F[SetActive: True]
-    F --> G[Start Wheel Running Animation]
-    G --> H[generator.GenerateJoules: dt]
-    H --> I[ChoreSuppression.CancelOperateChores]
+    A["AutoManualGeneratorController (5Hz Tick)"] --> B{"Duplicant Worker Operating?"}
+    B -->|Yes| C["Yield to Duplicant: Duplicant Always Wins"]
+    B -->|No| D{"Battery Grid Saturated?"}
+    D -->|Yes: Batteries 100%| E["Stop Wheel Animation and Set Idle"]
+    D -->|No: Power Needed| F["SetActive: True"]
+    F --> G["Start Wheel Running Animation"]
+    G --> H["generator.GenerateJoules(dt)"]
+    H --> I["ChoreSuppression.CancelOperateChores"]
 
     style A fill:#1a365d,stroke:#2b6cb0,color:#fff
     style C fill:#7b341e,stroke:#dd6b20,color:#fff
@@ -90,16 +90,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[AutoFabricatorController 5Hz Tick] --> B{CurrentWorkingOrder Queued?}
-    B -->|No Order / Missing Ingredients| C[Idle: Wait for Delivery]
-    B -->|Order Queued & Stocked| D{Duplicant Worker Operating?}
-    D -->|Yes| E[Yield to Duplicant]
-    D -->|No| F[Advance Recipe: workable.WorkTick null, dt]
-    F --> G[Drive working_loop Animation & Update Progress Meter]
-    G --> H{Work Time Remaining <= 0?}
-    H -->|No| I[Continue Next Tick]
-    H -->|Yes| J[CompleteWorkingOrder: Deduct Ingredients & Spawn Food]
-    J --> K[Auto-Drop Meal for Auto-Sweeper Conveyor Pickup]
+    A["AutoFabricatorController (5Hz Tick)"] --> B{"CurrentWorkingOrder Queued?"}
+    B -->|No Order or Missing Ingredients| C["Idle: Wait for Delivery"]
+    B -->|Order Queued and Stocked| D{"Duplicant Worker Operating?"}
+    D -->|Yes| E["Yield to Duplicant"]
+    D -->|No| F["Advance Recipe: workable.WorkTick(null, dt)"]
+    F --> G["Drive working_loop Animation and Update Meter"]
+    G --> H{"Work Time Remaining <= 0?"}
+    H -->|No| I["Continue Next Tick"]
+    H -->|Yes| J["CompleteWorkingOrder: Deduct Ingredients and Spawn Food"]
+    J --> K["Auto-Drop Meal for Conveyor Pickup"]
 
     style A fill:#1a365d,stroke:#2b6cb0,color:#fff
     style C fill:#2d3748,stroke:#4a5568,color:#fff
@@ -193,14 +193,14 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    A[AutoRanchStation 1Hz Tick] --> B[Scan Room Cavity for Eligible Critters]
-    B --> C{Eligible Critter Found Missing Buff?}
-    C -->|No| D[Standby: Room Critters Fully Tended]
-    C -->|Yes| E{Duplicant Worker Present?}
-    E -->|Yes| F[Yield to Duplicant]
-    E -->|No| G[Apply Ranching Buff to Critter: 6 Cycles]
-    G --> H[Dispense Yields: Wool / Reed Fiber / Milk]
-    H --> I[RanchCompletionGuard: Clean Disconnect on Movement]
+    A["AutoRanchStation (1Hz Tick)"] --> B["Scan Room Cavity for Eligible Critters"]
+    B --> C{"Eligible Critter Found Missing Buff?"}
+    C -->|No| D["Standby: Room Critters Fully Tended"]
+    C -->|Yes| E{"Duplicant Worker Present?"}
+    E -->|Yes| F["Yield to Duplicant"]
+    E -->|No| G["Apply Ranching Buff to Critter (6 Cycles)"]
+    G --> H["Dispense Yields: Wool, Reed Fiber, Milk"]
+    H --> I["RanchCompletionGuard: Clean Disconnect on Movement"]
 
     style A fill:#1a365d,stroke:#2b6cb0,color:#fff
     style D fill:#2d3748,stroke:#4a5568,color:#fff
@@ -266,18 +266,18 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[AutoSweeperHarvestController 1Hz Tick] --> B[Query SolidTransferArm Sweep Area]
-    B --> C[Adapt to ZonedArm / AdjustableArm Dynamic Grid]
-    C --> D[Filter Fully Grown Crops: Maturity == 100%]
-    D --> E{Check Dual-Cell Reachability}
-    E -->|Plant Cell OR Foundation Cell Unreachable| F[Skip Plant]
-    E -->|Both Cells Reachable| G[Trigger Instant Harvest]
-    G --> H[Drop Crops & Seeds for Conveyor Loader]
+    A["AutoSweeperHarvestController (1Hz Tick)"] --> B["Query SolidTransferArm Sweep Area"]
+    B --> C["Adapt to ZonedArm or AdjustableArm Dynamic Grid"]
+    C --> D["Filter Fully Grown Crops (Maturity == 100%)"]
+    D --> E{"Check Dual-Cell Reachability"}
+    E -->|Plant Cell OR Foundation Cell Unreachable| F["Skip Plant"]
+    E -->|Both Cells Reachable| G["Trigger Instant Harvest"]
+    G --> H["Drop Crops and Seeds for Conveyor Loader"]
     
-    subgraph Robotic Safety Guard
-        I[StandardWorker.AttachOverrideAnims] -->|SolidTransferArm Worker| J{Has SymbolOverrideController?}
-        J -->|No| K[StandardWorkerAttachOverrideAnimsPatch: Suppress Multi-Tool Anims]
-        J -->|Yes| L[Safe Execution: Zero Assertion Crashes]
+    subgraph RoboticSafety ["Robotic Safety Guard"]
+        I["StandardWorker.AttachOverrideAnims"] -->|SolidTransferArm Worker| J{"Has SymbolOverrideController?"}
+        J -->|No| K["StandardWorkerAttachOverrideAnimsPatch: Suppress Tool Anims"]
+        J -->|Yes| L["Safe Execution: Zero Assertion Crashes"]
     end
 
     style A fill:#1a365d,stroke:#2b6cb0,color:#fff

@@ -10,34 +10,34 @@ Automatic Industry is a comprehensive, high-performance automation overhaul for 
 
 ```mermaid
 graph TB
-    subgraph Engine Boot & Injection
-        A[Game Startup: GeneratedBuildings.LoadGeneratedBuildings] -->|Harmony Postfix| B[BuildingPrefabInjection]
-        B --> C[Scan Assets.BuildingDefs]
-        C --> D[Run Mod Compatibility Shims]
-        D --> E[Attach Controllers & AutoBuildingCustomizer]
+    subgraph SubBoot ["Engine Boot and Injection"]
+        A["Game Startup: GeneratedBuildings.LoadGeneratedBuildings"] -->|Harmony Postfix| B["BuildingPrefabInjection"]
+        B --> C["Scan Assets.BuildingDefs"]
+        C --> D["Run Mod Compatibility Shims"]
+        D --> E["Attach Controllers and AutoBuildingCustomizer"]
     end
 
-    subgraph Simulation Loop 5Hz / 1Hz
-        E --> F[AutoWorkControllerBase]
-        F --> G{Duplicant Working?}
-        G -->|Yes| H[Yield to Duplicant - Duplicant Always Wins]
-        G -->|No| I{Vanilla Conditions Met?}
-        I -->|No| J[Idle / Standby]
-        I -->|Yes| K[Execute Automation Step]
-        K --> L[Suppress Duplicate Dupe Chores]
+    subgraph SubSim ["Simulation Loop (5Hz / 1Hz)"]
+        E --> F["AutoWorkControllerBase"]
+        F --> G{"Duplicant Working?"}
+        G -->|Yes| H["Yield to Duplicant: Duplicant Always Wins"]
+        G -->|No| I{"Vanilla Conditions Met?"}
+        I -->|No| J["Idle / Standby"]
+        I -->|Yes| K["Execute Automation Step"]
+        K --> L["Suppress Duplicate Dupe Chores"]
     end
 
-    subgraph Safety & Fallback Layer
-        K -->|Exception| M{Circuit Breaker}
-        M -->|3 Consecutive Errors| N[Trip Circuit Breaker]
-        N --> O[Safe 60s Cooldown to Manual Mode]
-        O -->|5 Recovery Attempts Exceeded| P[Permanent Manual Fallback]
+    subgraph SubSafety ["Safety & Fallback Layer"]
+        K -->|Exception| M{"Circuit Breaker"}
+        M -->|3 Consecutive Errors| N["Trip Circuit Breaker"]
+        N --> O["Safe 60s Cooldown to Manual Mode"]
+        O -->|5 Recovery Attempts Exceeded| P["Permanent Manual Fallback"]
     end
 
-    subgraph User Configuration
-        Q[Building Configuration Editor] --> S[BuildingToggleManager]
-        R[In-Game Building Details Toggle<br/>Normal Click / Shift+Click] --> S
-        T[Mod Settings PLib / ModMenu] --> S
+    subgraph SubConfig ["User Configuration"]
+        Q["Building Configuration Editor"] --> S["BuildingToggleManager"]
+        R["In-Game Building Details Toggle<br/>Normal Click / Shift+Click"] --> S
+        T["Mod Settings PLib / ModMenu"] --> S
         S --> F
     end
 
@@ -72,26 +72,17 @@ graph TB
 Automatic Industry is engineered with strict adherence to four non-negotiable principles:
 
 ```mermaid
-mindmap
-  root((Engineering Principles))
-    Zero Save Footprint
-      No custom types in save file
-      Safe to install/remove anytime
-      No corrupted saves or orphan data
-    Vanilla Condition Parity
-      Strict power and fuel requirements
-      Input delivery and storage headroom
-      Environmental pressure/temperature checks
-      Zero recipe inflation or cheat outputs
-    Duplicant Priority
-      Duplicants always take precedence
-      Automation yields immediately on worker contact
-      Resume cleanly when duplicant steps away
-    Circuit Breaker Containment
-      All steps guarded by SafeInvoke
-      3-failure trip limit
-      Automatic 60s cooldown and recovery
-      Graceful degradation to manual mode
+flowchart TD
+    Root["<b>Core Engineering Principles</b>"] --> P1["<b>Zero Save Footprint</b><br/>• No custom types in save file<br/>• Safe to install or remove anytime<br/>• Zero orphan data or corruption"]
+    Root --> P2["<b>Vanilla Condition Parity</b><br/>• Strict power and fuel requirements<br/>• Input delivery and storage headroom<br/>• Environmental pressure/temperature checks<br/>• Zero recipe inflation"]
+    Root --> P3["<b>Duplicant Priority</b><br/>• Duplicants always take precedence<br/>• Automation yields immediately on contact<br/>• Resume cleanly when duplicant finishes"]
+    Root --> P4["<b>Circuit Breaker Containment</b><br/>• All steps guarded by SafeInvoke<br/>• 3-failure trip limit<br/>• Automatic 60s cooldown and recovery<br/>• Graceful degradation to manual mode"]
+
+    style Root fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style P1 fill:#22543d,stroke:#38a169,color:#fff
+    style P2 fill:#2d3748,stroke:#4a5568,color:#fff
+    style P3 fill:#7b341e,stroke:#dd6b20,color:#fff
+    style P4 fill:#742a2a,stroke:#e53e3e,color:#fff
 ```
 
 | Principle | Technical Implementation | Benefit to Player |

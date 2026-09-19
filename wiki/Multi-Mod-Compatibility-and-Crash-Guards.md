@@ -48,9 +48,9 @@ sequenceDiagram
     Note over Worker: Auto-Sweeper Picks Up Item
     Worker->>Patch: AttachOverrideAnims(worker_controller)
     alt Worker is Robotic Arm (SolidTransferArm)
-        Patch->>Patch: Check: worker.UsesMultiTool() == false
+        Patch->>Patch: Check worker.UsesMultiTool() == false
         Patch-->>Worker: Return false (Skip Attaching Multi-Tool Symbols)
-        Note over Worker: Bypasses "require symbol override controller" assert crash!
+        Note over Worker: Bypasses symbol override controller assert crash
     end
 ```
 
@@ -81,15 +81,15 @@ Bilingual descriptions and long localization strings can push options controls o
 
 ```mermaid
 flowchart TD
-    A[Customize Buildings Harmony Patches] --> B{Patches Conflicting Structure?}
-    B -->|Oil Refinery / Oil Well Cap| C[CustomizeBuildingsCompatibility: Return False]
-    B -->|Compost States Patch| D[Suppress inert.GoTo composting recursion]
-    B -->|Desalinator Patch| E[Suppress Destructive Component Removal]
+    A["Customize Buildings Harmony Patches"] --> B{"Patches Conflicting Structure?"}
+    B -->|Oil Refinery / Oil Well Cap| C["CustomizeBuildingsCompatibility: Return False"]
+    B -->|Compost States Patch| D["Suppress inert.GoTo composting recursion"]
+    B -->|Desalinator Patch| E["Suppress Destructive Component Removal"]
     
-    C --> F[Preserve Vanilla Component Architecture]
+    C --> F["Preserve Vanilla Component Architecture"]
     D --> F
     E --> F
-    F --> G[Automatic Industry Controllers Run Safely]
+    F --> G["Automatic Industry Controllers Run Safely"]
 
     style A fill:#742a2a,stroke:#e53e3e,color:#fff
     style C fill:#2b6cb0,stroke:#1a365d,color:#fff
@@ -107,18 +107,18 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Pause Screen Opened] --> B[Mod Menu Locates Options Button]
-    B --> C{Multilingual Matching}
-    C -->|Delegate Reflection| D[bi.onClick.Method.Name == 'OnOptions']
-    C -->|Localized Constants| E[STRINGS.UI.FRONTEND.PAUSE_SCREEN.OPTIONS]
-    C -->|Multilingual Keywords| F[选项 / 選項 / OPTION / 設定 / 설정 / НАСТРОЙК / EINSTELLUNG]
+    A["Pause Screen Opened"] --> B["Mod Menu Locates Options Button"]
+    B --> C{"Multilingual Matching"}
+    C -->|Delegate Reflection| D["bi.onClick.Method.Name == 'OnOptions'"]
+    C -->|Localized Constants| E["STRINGS.UI.FRONTEND.PAUSE_SCREEN.OPTIONS"]
+    C -->|Multilingual Keywords| F["Options / 設定 / 설정 / 选项"]
     
-    D --> G[Insert Mod Menu Button at optionsIndex + 1]
+    D --> G["Insert Mod Menu Button at optionsIndex + 1"]
     E --> G
     F --> G
     
-    G --> H[Open Configuration Screen]
-    H --> I[Canvas sortingOrder = 350: Render Above All Dialogs]
+    G --> H["Open Configuration Screen"]
+    H --> I["Canvas sortingOrder = 350: Render Above All Dialogs"]
 
     style A fill:#2d3748,stroke:#4a5568,color:#fff
     style C fill:#1a365d,stroke:#2b6cb0,color:#fff
@@ -151,13 +151,13 @@ Ronivan's *Chemical Processing* includes a `BuildingEditor` tool that calls `Sho
 
 ```mermaid
 flowchart TD
-    A[SaveLoadRoot.Load / Util.KInstantiate] --> B[Instantiate Building / Entity]
-    B --> C[GameObject.SetActive: True]
-    C --> D[SymbolOverrideController.OnPrefabInit]
-    D --> E{usingNewSymbolOverrideSystem == true?}
-    E -->|No: False by Default in Vanilla| F[SymbolOverrideControllerCompatibility Prefix]
-    F --> G[Auto-Heal: set usingNewSymbolOverrideSystem = true]
-    G --> H[Safe Initialization: Zero Assertion Crashes]
+    A["SaveLoadRoot.Load / Util.KInstantiate"] --> B["Instantiate Building / Entity"]
+    B --> C["GameObject.SetActive: True"]
+    C --> D["SymbolOverrideController.OnPrefabInit"]
+    D --> E{"usingNewSymbolOverrideSystem == true?"}
+    E -->|No: False by Default in Vanilla| F["SymbolOverrideControllerCompatibility Prefix"]
+    F --> G["Auto-Heal: set usingNewSymbolOverrideSystem = true"]
+    G --> H["Safe Initialization: Zero Assertion Crashes"]
     E -->|Yes| H
 
     style A fill:#2d3748,stroke:#4a5568,color:#fff
@@ -175,21 +175,21 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[Early Mod Loading: Class Scans Touch GeoTuner] --> B[Static Constructors Run Before Sound Assets Loaded]
-    B --> C[liquidGeyserTuningSoundPath Frozen to NULL]
+    A["Early Mod Loading: Class Scans Touch GeoTuner"] --> B["Static Constructors Run Before Sound Assets Loaded"]
+    B --> C["liquidGeyserTuningSoundPath Frozen to NULL"]
     
-    subgraph Vanilla Behavior: CRASH
-        C --> D[Geyser Tuned In-Game]
-        D --> E[SoundEvent.PlayOneShot: null]
-        E --> F[FMOD PathToGUID: NullReferenceException]
-        F --> G[Black Hole Error Screen / Game Crash]
+    subgraph SubVanilla ["Vanilla Behavior: CRASH"]
+        C --> D["Geyser Tuned In-Game"]
+        D --> E["SoundEvent.PlayOneShot: null"]
+        E --> F["FMOD PathToGUID: NullReferenceException"]
+        F --> G["Black Hole Error Screen / Game Crash"]
     end
 
-    subgraph Automatic Industry Solution: HEALED
-        C --> H[GeoTunerSoundSafetyPatch.EnsureSoundPathsPopulated]
-        H --> I[Re-query GlobalAssets.GetSound When Audio Assets Ready]
-        I --> J[Prefix Guard: Check !string.IsNullOrEmpty: soundPath]
-        J --> K[Smooth Audio Playback / Safe Mute: 100% Stable]
+    subgraph SubHealed ["Automatic Industry Solution: HEALED"]
+        C --> H["GeoTunerSoundSafetyPatch.EnsureSoundPathsPopulated"]
+        H --> I["Re-query GlobalAssets.GetSound When Audio Assets Ready"]
+        I --> J["Prefix Guard: Check soundPath != null"]
+        J --> K["Smooth Audio Playback / Safe Mute: 100% Stable"]
     end
 
     style A fill:#2d3748,stroke:#4a5568,color:#fff
