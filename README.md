@@ -45,6 +45,7 @@
 > [!NOTE]
 > This is a curated compatibility list. We actively audit and engineer compatibility shims for peer community mods.
 
+- **[Interactive Engineering Wiki](https://github.com/Eurekalo/Automatic_Industry/wiki)** — Comprehensive visual architectural documentation, building logic flowcharts, and crash guard specifications.
 - **[ModMenu](https://steamcommunity.com/sharedfiles/filedetails/?id=3789353358)** — In-game mod configuration manager.
 - **[Curated Compatibility Mod List](https://rentry.co/a4g5oobm)** — Tested community mods.
 - **Integrated Compatibility Shims**:
@@ -180,11 +181,13 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 - See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
 - **v2.5.0**:
-  - Excluded Auto-Sweeper Harvest (`SolidTransferArm`) and Geyser Study (`GeyserStudy`) from Building Configuration Editor, retaining them strictly in Mod Options.
-  - Consolidated Virtual Planetarium (`DLC1CosmicResearchCenter`) into a unified DLC entry without redundant Base Game/Spaced Out duplicate entries.
+  - **Building Configuration Editor**: Full-screen dual-pane editor with category filtering, real-time search, category active counters, **Batch Toggle**, and dedicated **Save Button** with immediate auto-save.
+  - **In-Game Details Automation Button**: Directly toggle automation from building inspection panels; supports **Shift + Left Click** to instantly toggle without queueing Duplicant wrench errands.
+  - Excluded non-prefab mechanics (Auto-Sweeper Harvest, Geyser Study) from the Building Configuration Editor, retaining them strictly in Mod Options.
+  - Consolidated Virtual Planetarium (`DLC1CosmicResearchCenter`) into a unified DLC entry without redundant Base Game / Spaced Out duplicate entries.
   - Corrected Telescope sprite fallback in Spaced Out! to use the enclosed domed observatory icon (`ClusterTelescopeEnclosed`) instead of the low tripod.
   - Enhanced ModMenu compatibility with automatic multi-dialog hiding and restoration, alongside canvas sorting order 350 to eliminate window occlusion.
-  - Comprehensive automated regression tests verified (262/262 sandbox tests passing).
+  - Comprehensive automated regression tests verified (270/270 sandbox tests passing).
 
 ---
 

@@ -1,44 +1,130 @@
-# Automatic Industry Wiki
+# Automatic Industry (Auto Machine Rebuilt) Wiki
 
-Welcome to the **Automatic Industry (Auto Machine Rebuilt)** technical wiki and architectural reference.
+Welcome to the **Automatic Industry** engineering wiki and architectural reference.
 
-This wiki documents the engineering internals, code functions, state machine interceptions, and simulation logic behind every automated building in the mod.
+Automatic Industry is a comprehensive, high-performance automation overhaul for *Oxygen Not Included*. It enables industrial machinery, agricultural stations, ranching equipment, research facilities, and utility buildings to operate continuously and automatically when supply, power, and environmental conditions are met.
 
 ---
 
-## 📚 Table of Contents
+## 🧭 System Architecture at a Glance
 
-1. **[Automated Buildings Code Logic](Automated-Buildings-Logic)**
-   - Detailed breakdown of all 50+ automated buildings.
-   - Exact C# controller classes, interfaces (`ISim200ms`, `ISim1000ms`), lifecycle methods (`OnPrefabInit`, `OnSpawn`, `Step`, `StopAutomation`), and operational flowcharts.
-2. **[Architecture & Core Systems](Architecture-and-Design)**
-   - Component-driven architecture vs transpilers.
-   - `BuildingPrefabInjection` scan pipeline.
-   - `AutoBuildingCustomizer` per-building independent toggle and wrench errand dispatch.
-   - `ChoreSuppression` zero-allocation Duplicant chore cancellation.
-3. **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
-   - Compatibility layers for *No Manual Delivery*, *PLib*, *Customize Buildings*, *I_实用系统*, *Multithreaded Simulation (SimDLL_Rust)*, *EmptyStorage*, *Adjustable Transfer Arm*, *Mod Menu*, and *ONI Together*.
-   - Proactive `SymbolOverrideController` injection, animation override suppression on robotic workers, and prober fallbacks.
-4. **[Compatible Mods Roster](Compatible-Mods)**
-   - Planned and verified compatible community mods (*Multithreaded Simulation*, *FastTrack*, *ModMenu*, *Ronivan's Legacy*, *Auto Compost*, *Empty Storage*, *Zoned Auto Sweeper*, *No Manual Delivery*).
-5. **[Incorporated Features from Obsolete Mods](Incorporated-Features-from-Obsolete-Mods)**
-   - Community mod concepts modernized, ported, and maintained (*Auto-Sweeper Harvest*, *Liquid Reservoir Boost*).
+```mermaid
+graph TB
+    subgraph Engine Boot & Injection
+        A[Game Startup: GeneratedBuildings.LoadGeneratedBuildings] -->|Harmony Postfix| B[BuildingPrefabInjection]
+        B --> C[Scan Assets.BuildingDefs]
+        C --> D[Run Mod Compatibility Shims]
+        D --> E[Attach Controllers & AutoBuildingCustomizer]
+    end
+
+    subgraph Simulation Loop 5Hz / 1Hz
+        E --> F[AutoWorkControllerBase]
+        F --> G{Duplicant Working?}
+        G -->|Yes| H[Yield to Duplicant - Duplicant Always Wins]
+        G -->|No| I{Vanilla Conditions Met?}
+        I -->|No| J[Idle / Standby]
+        I -->|Yes| K[Execute Automation Step]
+        K --> L[Suppress Duplicate Dupe Chores]
+    end
+
+    subgraph Safety & Fallback Layer
+        K -->|Exception| M{Circuit Breaker}
+        M -->|3 Consecutive Errors| N[Trip Circuit Breaker]
+        N --> O[Safe 60s Cooldown to Manual Mode]
+        O -->|5 Recovery Attempts Exceeded| P[Permanent Manual Fallback]
+    end
+
+    subgraph User Configuration
+        Q[Building Configuration Editor] --> S[BuildingToggleManager]
+        R[In-Game Building Details Toggle<br/>Normal Click / Shift+Click] --> S
+        T[Mod Settings PLib / ModMenu] --> S
+        S --> F
+    end
+
+    style A fill:#2d3748,stroke:#4a5568,color:#fff
+    style F fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style K fill:#22543d,stroke:#38a169,color:#fff
+    style N fill:#742a2a,stroke:#e53e3e,color:#fff
+    style Q fill:#44337a,stroke:#805ad5,color:#fff
+```
+
+---
+
+## 📚 Wiki Sections & Navigation
+
+<div align="center">
+
+| Section | Description | Key Topics |
+| :--- | :--- | :--- |
+| **[🎛️ Building Configuration & Controls](Building-Configuration-and-Controls)** | Interactive dual-pane configuration screen and in-game controls. | Dual-pane editor, search & category filters, Batch Toggle, Save button, Shift+Left Click quick toggle. |
+| **[⚙️ Automated Buildings Logic](Automated-Buildings-Logic)** | Comprehensive logic reference for all 40+ automated buildings. | State machine hooks, power/fuel conditions, recipe progression, auto-drop, and chore suppression. |
+| **[🏛️ Architecture & System Design](Architecture-and-Design)** | Deep dive into the component-driven engineering systems. | Prefab injection pipeline, 5Hz simulation cadence, zero-allocation chore filters, and circuit breakers. |
+| **[🛡️ Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)** | Defensive shims protecting against third-party mod conflicts. | Shims for *No Manual Delivery*, *ModMenu*, *Ronivan's Mods*, *Customize Buildings*, *FastTrack*, *SimDLL*. |
+| **[📦 Compatible Mods Roster](Compatible-Mods)** | Tested, verified, and community-audited compatible mods. | Workshop links, compatibility status, tested versions, and multi-mod configuration notes. |
+| **[📜 Incorporated Features](Incorporated-Features-from-Obsolete-Mods)** | Modernized and maintained features from legacy mods. | Auto-Sweeper crop harvesting, Liquid Reservoir direct fetching, and 100% save-safe ports. |
+
+</div>
 
 ---
 
 ## 🎯 Core Engineering Principles
 
-Automatic Industry is designed around four strict engineering rules:
+Automatic Industry is engineered with strict adherence to four non-negotiable principles:
 
-1. **Vanilla Condition Parity**:
-   - Automation only operates when all vanilla preconditions hold: electrical power, ingredient supply, storage headroom, ambient pressure, temperature thresholds, and room requirements.
-   - No cheat outputs, no recipe modifications, and no relaxed power costs (except the explicitly optional legacy Oil Refinery 100% efficiency toggle).
-2. **Zero Save Data Footprint**:
-   - No custom serializable fields, no new building prefabs, and no custom entities stored in the save file.
-   - Completely safe to install or uninstall at any point in an existing colony without corrupting save files or leaving orphaned data.
-3. **Safe Exception Containment (`SafeInvoke`)**:
-   - Every reflective method call, state machine poll, and controller step is protected by `SafeInvoke.Try`.
-   - Any runtime failure logs cleanly to `player.log` and degrades to manual operation instead of crashing the Unity game thread.
-4. **Clean Component Architecture**:
-   - ~70% pure component-driven logic attached to completed prefabs via `GeneratedBuildings.LoadGeneratedBuildings` postfix.
-   - Avoids fragile IL transpilers that break upon game updates.
+```mermaid
+mindmap
+  root((Engineering Principles))
+    Zero Save Footprint
+      No custom types in save file
+      Safe to install/remove anytime
+      No corrupted saves or orphan data
+    Vanilla Condition Parity
+      Strict power and fuel requirements
+      Input delivery and storage headroom
+      Environmental pressure/temperature checks
+      Zero recipe inflation or cheat outputs
+    Duplicant Priority
+      Duplicants always take precedence
+      Automation yields immediately on worker contact
+      Resume cleanly when duplicant steps away
+    Circuit Breaker Containment
+      All steps guarded by SafeInvoke
+      3-failure trip limit
+      Automatic 60s cooldown and recovery
+      Graceful degradation to manual mode
+```
+
+| Principle | Technical Implementation | Benefit to Player |
+| :--- | :--- | :--- |
+| **Zero Save Footprint** | No custom serialized MonoBehaviours or entity classes. Prefab settings map to vanilla tags and colony registries. | Completely safe to enable, update, or uninstall mid-playthrough without corrupting saves. |
+| **Vanilla Condition Parity** | Controllers strictly check `Operational.IsOperational`, `JoulesToGenerate`, storage headroom, and ambient pressure. | Preserves authentic game balance and power grids; no magical infinite resources. |
+| **Duplicant Priority** | Real-time `worker != null` check yields control to Duplicants immediately whenever commanded. | Players can manually prioritize emergency tasks without disabling mod settings. |
+| **Circuit Breakers (`SafeInvoke`)** | Evaluates steps within try-catch circuit breakers with auto-recovery cooldowns. | Transient mod errors or edge cases degrade to manual mode rather than crashing the game to desktop. |
+
+---
+
+## 🚀 What's New in v2.5.0
+
+- **Dual-Pane Building Configuration Editor**:
+  - Full-screen configuration interface with left-pane category filters (`All`, `Power`, `Food`, `Refinement`, `Stations`, `Utilities`) and real-time text search.
+  - Active building counters (`Active: X / Total: Y`) per category.
+  - **Batch Toggle Button**: Enable or disable all visible buildings with a single click.
+  - **Dedicated Save Button & Immediate Auto-Save**: Guaranteed disk persistence across game sessions.
+- **In-Game Building Details Automation Button**:
+  - Direct toggle button on building inspection panels.
+  - **Shift + Left Click**: Instantly flip automation on/off without waiting for a Duplicant wrench errand.
+  - Rich bilingual tooltip explaining normal click vs Shift+Click behavior and mod attribution.
+- **ModMenu Integration**:
+  - Canvas sorting order set to 350, ensuring modal dialogs render cleanly above pause menus without UI clipping or occlusion.
+  - Automatic dialog stack hiding and restoration when opening sub-screens.
+- **Enhanced DLC & Base Game Filtering**:
+  - Virtual Planetarium consolidated into a unified entry across DLCs.
+  - Telescope dynamic sprite fallback correctly displays domed observatory icon in Spaced Out!
+
+---
+
+## 🔗 Community & Workshop Links
+
+- **Steam Workshop**: [Automatic Industry (Steam ID: 3782701870)](https://steamcommunity.com/sharedfiles/filedetails/?id=3782701870)
+- **Source Code Repository**: [GitHub (Eurekalo/Automatic_Industry)](https://github.com/Eurekalo/Automatic_Industry)
+- **Issue Tracker**: [GitHub Issues](https://github.com/Eurekalo/Automatic_Industry/issues)

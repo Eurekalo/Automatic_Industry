@@ -1,390 +1,295 @@
 # Automated Buildings Code Logic & Function Reference
 
-This document is the definitive technical reference for every automated building in **Automatic Industry (Auto Machine Rebuilt)**. It explains the exact C# controller classes, interfaces, lifecycle methods (`OnPrefabInit`, `OnSpawn`, `Step`, `StopAutomation`), state machine hooks, chore suppressions, progress bars, and operational logic.
+This document is the definitive technical reference for every automated building in **Automatic Industry (Auto Machine Rebuilt)**. It details the underlying C# controller classes, simulation cadences (`ISim200ms`, `ISim1000ms`), state machine hooks, chore suppressions, progress meters, and operational flows.
 
 ---
 
-## 📑 Category Navigation
+## 📊 Building Automation Matrix at a Glance
 
-- [1. Power Category](#1-power-category) (Manual Generator, Manual Radbolt Generator)
-- [2. Food & Cooking Category](#2-food--cooking-category) (Cooking Fabricators, Spice Grinder, Food Dehydrator, Food Smoker)
-- [3. Plumbing & Ventilation Category](#3-plumbing--ventilation-category) (Liquid & Gas Valves, Bottle & Canister Fillers)
-- [4. Refinement Category](#4-refinement-category) (Oil Refinery, Desalinator, Compost, Bleach Stone Hopper / Gleaner, Ice Liquefier, Crafting Fabricators)
-- [5. Stations & Ranching Category](#5-stations--ranching-category) (Ranching, Farm Station, Power Control Station, Mission Control, Geotuner, Biobot Builder)
-- [6. Research & Science Category](#6-research--science-category) (Research Centers, Materials Study Terminal, Botanical Analyzer, Telescopes)
-- [7. Utilities Category](#7-utilities-category) (Oil Well Cap, Ice-E Fan, Reset Skills, Campfire)
-- [8. Auto-Sweeper Crop Harvesting](#8-auto-sweeper-crop-harvesting) (Universal Plant Harvesting Engine)
+| Category | Building | Prefab ID | Controller Class | Cadence | Automation Behavior |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **⚡ Power** | Manual Generator | `ManualGenerator` | `AutoManualGeneratorController` | 5Hz | Runs wheel automatically when battery grid demands power. |
+| | Manual Radbolt Gen | `ManualHighEnergyParticleSpawner` | `AutoFabricatorController` | 5Hz | Ticks radbolt fabrication recipe and emits particles. |
+| **🍲 Food** | Microbe Musher | `MicrobeMusher` | `AutoFabricatorController` | 5Hz | Cooks queued recipes without duplicants. |
+| | Electric Grill | `CookingStation` | `AutoFabricatorController` | 5Hz | Cooks queued meal orders continuously. |
+| | Gas Range | `GourmetCookingStation` | `AutoFabricatorController` | 5Hz | Cooks gourmet meals continuously. |
+| | Deep Fryer | `Deepfryer` | `AutoFabricatorController` | 5Hz | Prepares fried foods continuously. |
+| | Spice Grinder | `SpiceGrinder` | `AutoSpiceGrinderController` | 5Hz | 100 kg headroom; converts fetches to `FabricateFetch`. |
+| | Sushi Bar | `SushiBar` | `AutoFabricatorController` | 5Hz | Prepares raw seafood and sushi dishes. |
+| | Food Dehydrator | `FoodDehydrator` | `AutoStorageReleaseController` | 1Hz | Dehydrates rations and auto-ejects packaged rations. |
+| | Food Smoker | `Smoker` | `AutoFoodSmoker` | 1Hz | Smokes rations and auto-drops finished products. |
+| **🚰 Plumbing** | Liquid Valve | `LiquidValve` | `AutoValveController` | 5Hz | Instantly applies slider flow rate changes without wrench errands. |
+| | Gas Valve | `GasValve` | `AutoValveController` | 5Hz | Instantly applies slider flow rate changes without wrench errands. |
+| | Bottle Filler | `LiquidBottler` | `AutoBottler` | 1Hz | Unlocks stored bottles for direct Auto-Sweeper pickup. |
+| | Canister Filler | `GasBottler` | `AutoBottler` | 1Hz | Unlocks stored gas canisters for direct Auto-Sweeper pickup. |
+| **🏭 Refinement** | Oil Refinery | `OilRefinery` | `AutoOilRefinery` | 5Hz | Refines crude oil; supports 50% vanilla and 100% legacy rates. |
+| | Desalinator | `Desalinator` | `HardThresholdRelease` | 1Hz | Auto-ejects accumulated salt upon reaching ~945 kg. |
+| | Compost | `Compost` | `CompostAutomationComponent` | 5Hz | Automated pitchfork flipping with dual progress bars. |
+| | Rock Crusher | `Crusher` | `AutoFabricatorController` | 5Hz | Crushes ore, table salt, sand, and lime automatically. |
+| | Metal Refinery | `MetalRefinery` | `AutoFabricatorController` | 5Hz | Smelts refined metals and alloys continuously. |
+| | Glass Forge | `GlassForge` | `AutoFabricatorController` | 5Hz | Melts sand into molten glass continuously. |
+| | Plywood Press | `WoodTileFabricator` | `AutoFabricatorController` | 5Hz | Presses wood into structural plywood. |
+| | Sludge Press | `SludgePress` | `AutoFabricatorController` | 5Hz | Compresses mud and sludge into water and dirt. |
+| | Diamond Press | `DiamondPress` | `AutoFabricatorController` | 5Hz | Compresses refined carbon into diamonds. |
+| | Bleach Hopper/Gleaner | `MilkFatSeparator` | `AutoStorageReleaseController` | 1Hz | Separates brackwax and drops solid output automatically. |
+| | Ice Liquefier | `IceKettle` | `VanillaEmptyPaths` | 1Hz | Melts ice and auto-ejects bottled water when tank is full. |
+| **🐾 Ranching** | Grooming Station | `RanchStation` | `AutoRanchStation` | 1Hz | Tends critters automatically; applies 6-cycle Groomed buff. |
+| | Shearing Station | `ShearingStation` | `AutoRanchStation` | 1Hz | Shears eligible critters; drops wool/fiber to station floor. |
+| | Milking Station | `MilkingStation` | `AutoRanchStation` | 1Hz | Milks brackene critters; dispenses milk without duplicant. |
+| | Aquatic Variants | `UnderwaterRanchStation` | `AutoRanchStation` | 1Hz | Automated aquatic critter grooming and shearing. |
+| **🌾 Farming** | Farm Station | `FarmStation` | `AutoTinkerStationController` | 5Hz | Fabricates Micronutrient Fertilizer; suppresses operate chores. |
+| **🧪 Science** | Research Center | `ResearchCenter` | `AutoResearchController` | 5Hz | Consumes dirt; generates Novice Research points. |
+| | Supercomputer | `AdvancedResearchCenter` | `AutoResearchController` | 5Hz | Dual-fetch enabled; consumes water and generates tech points. |
+| | Material Study Terminal | `NuclearResearchCenter` | `AutoNuclearResearchCenterController` | 5Hz | Consumes radbolts; generates Nuclear Research points. |
+| | Botanical Analyzer | `GeneticAnalysisStation` | `AutoGeneticAnalysisStationController` | 5Hz | Analyzes mutant seeds and unlocks genetic traits. |
+| | Telescopes | `Telescope` / `ClusterTelescope` | `AutoTelescopeController` | 5Hz | Conducts celestial and deep space astronomy scanning. |
+| **🛠️ Utilities** | Oil Well Cap | `OilWellCap` | `AutoOilWellCap` | 1Hz | Automatically vents backpressure at configurable threshold. |
+| | Ice-E Fan | `IceCooledFan` | `AutoIceCooledFanController` | 5Hz | Cools ambient air automatically while ice is stocked. |
+| | Wood Heater | `WoodHeater` | `AutoWorkControllerBase` | 5Hz | Maintains space heating continuously. |
+| **🚀 Rocketry** | Mission Control | `MissionControl` / `Cluster` | `AutoMissionControlController` | 1Hz | Broadcasts orbital speed guidance to inbound/orbiting rockets. |
+| **🤖 Robotics** | Biobot Builder | `MorbRoverMaker` | `AutoMorbRoverMaker` | 1Hz | Assembles Morb Rovers automatically from steel and biomass. |
+| | Auto-Sweeper Harvest | `SolidTransferArm` | `AutoSweeperHarvestController` | 1Hz | Universal crop harvest engine with dual-cell reach check. |
 
 ---
 
-## 1. Power Category
+## 1. ⚡ Power Category
+
+```mermaid
+flowchart TD
+    A[AutoManualGeneratorController 5Hz Tick] --> B{Duplicant Worker Operating?}
+    B -->|Yes| C[Yield to Duplicant: Duplicant Always Wins]
+    B -->|No| D{Battery Grid Saturated?}
+    D -->|Yes: Batteries 100%| E[Stop Wheel Animation & Set Idle]
+    D -->|No: Power Needed| F[SetActive: True]
+    F --> G[Start Wheel Running Animation]
+    G --> H[generator.GenerateJoules: dt]
+    H --> I[ChoreSuppression.CancelOperateChores]
+
+    style A fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style C fill:#7b341e,stroke:#dd6b20,color:#fff
+    style E fill:#2d3748,stroke:#4a5568,color:#fff
+    style G fill:#22543d,stroke:#38a169,color:#fff
+```
 
 ### Manual Generator (Hamster Wheel)
 - **Prefab**: `ManualGenerator`
-- **Controller Class**: [`AutoManualGeneratorController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoManualGeneratorController.cs)
-- **Base Class**: `AutoWorkControllerBase` (implements `ISim200ms` cadence)
+- **Controller Class**: `AutoManualGeneratorController` (inherits `AutoWorkControllerBase`)
+- **Key Logic**:
+  1. Detects grid state via `generator.JoulesToGenerate`. If batteries connected to the wire circuit are below their threshold, automation activates.
+  2. Directly calls `generator.GenerateJoules(dt)` at 5Hz (`ISim200ms`).
+  3. Cancels manual Duplicant run errands via `ChoreSuppression.CancelOperateChores(gameObject)`, preventing Duplicants from running across the base when automation is handling the load.
 
-#### Code Function Logic:
-1. **Lifecycle (`Prepare()`)**:
-   - Caches `ManualGenerator`, `Operational`, and `KBatchedAnimController`.
-2. **Work Assessment (`Step(float dt)`)**:
-   - Checks if a Duplicant is already manually running on the wheel (`generator.worker != null`). If so, yields immediately.
-   - Evaluates connected power grid capacity: if connected batteries require charging (`generator.JoulesToGenerate > 0f` or circuit not saturated):
-     - Sets building active: `SetActive(true)`.
-     - Starts hamster wheel animation: `StartAnimation()` (`working_loop`).
-     - Calls `generator.GenerateJoules(dt)` directly into the electrical network.
-     - Calls `ChoreSuppression.CancelOperateChores(gameObject)` to stop Duplicants from queueing run errands.
-3. **Safety Shutdown (`Reset()`)**:
-   - When the battery bank reaches 100% or the grid is disconnected: stops animation, clears active operational state, and idles.
-
----
-
-### Manual Radbolt Generator (Manual High Energy Particle Spawner)
+### Manual Radbolt Generator
 - **Prefab**: `ManualHighEnergyParticleSpawner`
-- **Controller Class**: Handled via [`AutoFabricatorController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoFabricatorController.cs)
-- **Design Rationale**: The Manual Radbolt Generator is built on ONI's `ComplexFabricator` architecture. Running it via `AutoFabricatorController` preserves the vanilla radbolt recipe duration, storage progress meter, and wheel animation without manual Workable hacking.
+- **Controller Class**: `AutoFabricatorController`
+- **Key Logic**: Operated via the unified `ComplexFabricator` pipeline. Advances radbolt generation work cycles, triggers particle beam emissions upon completion, and updates the building's radbolt meter.
 
 ---
 
-## 2. Food & Cooking Category
+## 2. 🍲 Food & Cooking Category
 
-### ComplexFabricator Cooking Stations
-- **Prefabs**: `MicrobeMusher`, `CookingStation` (Electric Grill), `GourmetCookingStation` (Gas Range), `Deepfryer`
-- **Controller Class**: [`AutoFabricatorController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoFabricatorController.cs)
+```mermaid
+flowchart TD
+    A[AutoFabricatorController 5Hz Tick] --> B{CurrentWorkingOrder Queued?}
+    B -->|No Order / Missing Ingredients| C[Idle: Wait for Delivery]
+    B -->|Order Queued & Stocked| D{Duplicant Worker Operating?}
+    D -->|Yes| E[Yield to Duplicant]
+    D -->|No| F[Advance Recipe: workable.WorkTick null, dt]
+    F --> G[Drive working_loop Animation & Update Progress Meter]
+    G --> H{Work Time Remaining <= 0?}
+    H -->|No| I[Continue Next Tick]
+    H -->|Yes| J[CompleteWorkingOrder: Deduct Ingredients & Spawn Food]
+    J --> K[Auto-Drop Meal for Auto-Sweeper Conveyor Pickup]
 
-#### Code Function Logic:
-1. **Chore Detachment (`Configure(string optionKey)`)**:
-   - Flips `ComplexFabricator.duplicantOperated = false`.
-   - By setting `duplicantOperated` to false, the vanilla state machine suppresses publishing `WorkChore` to the Duplicant colony brain, while fetch and delivery errands remain active for Auto-Sweepers and Duplicants.
-2. **Execution Loop (`Step(float dt)`)**:
-   - Checks `fabricator.CurrentWorkingOrder`. If ingredients are deposited and recipe is queued:
-     - Advances cooking recipe: `workable.WorkTick(null, dt)`.
-     - Drives the station's `working_loop` animation.
-     - Updates the cooking progress meter.
-     - When work reaches 100%, vanilla fabricator triggers `CompleteWorkingOrder()`, deducting ingredients and spawning the cooked meal.
-3. **Restoration on Manual Mode (`StopAutomation()`)**:
-   - If the player toggles the building back to manual in `AutoBuildingCustomizer`:
-     - Resets `duplicantOperated = true`.
-     - Recreates `WorkChore` on `ComplexFabricatorWorkable`.
-     - Dispatches `Game.Instance.Trigger((int)GameHashes.FabricatorOrdersUpdated)`.
+    style A fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style C fill:#2d3748,stroke:#4a5568,color:#fff
+    style F fill:#22543d,stroke:#38a169,color:#fff
+    style J fill:#44337a,stroke:#805ad5,color:#fff
+```
 
----
+### Cooking Stations (Electric Grill, Gas Range, Microbe Musher, Deep Fryer, Sushi Bar)
+- **Controller Class**: `AutoFabricatorController`
+- **Key Logic**:
+  1. **Chore Detachment**: Flips `ComplexFabricator.duplicantOperated = false`. This suppresses publishing `WorkChore` to the Duplicant brain, while leaving raw material delivery errands (`FabricateFetch`) completely open for Auto-Sweepers and Duplicants.
+  2. **Work Progression**: Calls `workable.WorkTick(null, dt)`, driving the cooking meter and animation loops.
+  3. **Order Completion**: Spawns finished food dishes and triggers `CompleteWorkingOrder()`.
 
 ### Spice Grinder
 - **Prefab**: `SpiceGrinder`
-- **Controller Class**: [`AutoSpiceGrinderController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoSpiceGrinderController.cs) & [`SpiceGrinderPatches`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Patches/SpiceGrinderPatches.cs)
-
-#### Code Function Logic:
-1. **Deadlock Prevention via Headroom Expansion (`ConfigurePrefabStorage`)**:
-   - In vanilla, `seedStorage.capacityKg = totalKg * 10f` (only 31 kg for Preserving Spice). Delivering 30 kg of salt left <1.0 kg capacity, which deadlocked delivery because seed items have a minimum 1.0 kg discrete mass.
-   - Automatic Industry expands capacity to `Mathf.Max(totalKg * 20f, 100f)`, guaranteeing salt and seeds can always be delivered in parallel.
-2. **Auto-Sweeper Delivery Conversion (`EnsureIngredientFetches`)**:
-   - Intercepts spice ingredient delivery errands and sets their chore type to `Db.Get().ChoreTypes.FabricateFetch` instead of vanilla `CookFetch`.
-   - Allows Auto-Sweepers (`SolidTransferArm`) to load seeds, salt, sucrose, and iron without Duplicant intervention.
-3. **Advance Stocking & Fetch Self-Healing**:
-   - Pre-stocks up to 10 batches of ingredients even when no food dish is currently placed in the grinder.
-   - Cleans dead/cancelled chore handles in `SpiceFetches` via `OnFetchEndedSafe`, permanently resolving the vanilla bug where cancelling a delivery froze the grinder's state machine.
-
----
+- **Controller Class**: `AutoSpiceGrinderController` & `SpiceGrinderPatches`
+- **Key Features**:
+  1. **100 kg Headroom Expansion**: In vanilla, `seedStorage.capacityKg = totalKg * 10f` (only 31 kg for Preserving Spice). Delivering 30 kg of salt left <1.0 kg capacity, which deadlocked delivery because seed items have a minimum 1.0 kg discrete mass. The mod expands capacity to `Mathf.Max(totalKg * 20f, 100f)`, guaranteeing salt and seeds can always be delivered in parallel.
+  2. **Auto-Sweeper Delivery**: Converts spice delivery errands to `Db.Get().ChoreTypes.FabricateFetch`, enabling Auto-Sweepers (`SolidTransferArm`) to load seeds and spices.
+  3. **Self-Healing Fetches**: `OnFetchEndedSafe` cleans dead chore handles, eliminating the vanilla bug where cancelled spice deliveries permanently froze the grinder.
 
 ### Food Dehydrator & Food Smoker
-- **Prefabs**: `FoodDehydrator`, `Smoker`
-- **Controllers**: [`AutoStorageReleaseController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoStorageReleaseController.cs) & [`AutoFoodSmoker`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoFoodSmoker.cs)
-
-#### Code Function Logic:
-- Both machines dehydrate or smoke rations automatically, but vanilla requires a Duplicant to walk over and take out the finished product.
-- **Dehydrator Dual Mechanism**:
-  - `AutoFabricatorController` drives the dehydration process.
-  - `AutoStorageReleaseController` checks the output storage every second: as soon as dried food packets are created, it calls `storage.DropAll()`, clearing the machine for the next batch.
-- **Food Smoker**:
-  - Monitors smoked food products and drops them to the floor for conveyor loader delivery.
+- **Controllers**: `AutoStorageReleaseController` & `AutoFoodSmoker`
+- **Key Logic**: In vanilla, dehydrated ration packets and smoked foods remain trapped inside the machine until a Duplicant arrives to manually empty it. The mod inspects the output storage every second and executes `storage.DropAll()`, immediately freeing the machine for continuous automated processing.
 
 ---
 
-## 3. Plumbing & Ventilation Category
+## 3. 🚰 Plumbing & Ventilation Category
 
 ### Liquid Valve & Gas Valve
 - **Prefabs**: `LiquidValve`, `GasValve`
-- **Controller Class**: [`AutoValveController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoValveController.cs)
-
-#### Code Function Logic:
-1. **Flow Rate Synchronization (`Sim200ms`)**:
-   - Compares `Valve.desiredFlow` with `Valve.currentFlow`.
-   - If the player modifies the slider:
-     - Sets `ValveBase.CurrentFlow = Valve.desiredFlow` immediately in memory.
-     - Cancels pending Duplicant wrench errands: `valve.CancelPendingChore()`.
-     - Refreshes the valve's visual needle meter.
-
----
+- **Controller Class**: `AutoValveController`
+- **Key Logic**:
+  1. Compares `Valve.desiredFlow` with `Valve.currentFlow` at 5Hz.
+  2. When the player adjusts the flow slider, `AutoValveController` sets `ValveBase.CurrentFlow = Valve.desiredFlow` immediately in memory and cancels pending Duplicant wrench errands (`valve.CancelPendingChore()`).
+  3. Real-time visual needle updates give instantaneous feedback.
 
 ### Bottle Filler & Canister Filler (Bottler Automation)
-- **Prefabs**: `LiquidBottler` (Bottle Filler), `GasBottler` (Canister Filler), `LiquidPumpingStation` (Pitcher Pump)
-- **Controller Class**: [`AutoBottler`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoBottler.cs)
-- **Interface**: `ISim1000ms`
-
-#### Code Function Logic:
-1. **Direct Auto-Sweeper Pickup**:
-   - In vanilla, bottled liquids/gases stored inside a filler are locked to Duplicant fetching only.
-   - `AutoBottler.Sim1000ms` checks stored bottles:
-     - Sets `storage.allowItemRemoval = true`.
-     - Re-targets `pickupable.targetWorkable = pickupable` on stored bottle items.
-   - **Benefit**: Auto-Sweepers (`SolidTransferArm`) can reach into the filler and load bottles directly onto Conveyor Loaders without dumping liquids onto the ground!
-2. **Dynamic Progress Bar**:
-   - When `ProgressBarBottler` is enabled in options, renders a real-time filling progress bar (0% -> 100%) tracking accumulated mass against `storage.capacityKg`.
+- **Prefabs**: `LiquidBottler`, `GasBottler`, `LiquidPumpingStation`
+- **Controller Class**: `AutoBottler` (Cadence: `ISim1000ms`)
+- **Key Logic**:
+  1. **Direct Auto-Sweeper Extraction**: Sets `storage.allowItemRemoval = true` and re-targets `pickupable.targetWorkable = pickupable` on stored bottles.
+  2. **Zero Spillage**: Auto-Sweepers can reach directly into the filler to deposit bottles onto Conveyor Loaders without dumping liquids or gases onto the floor.
+  3. **Visual Meter**: Optional real-time progress bar (0% -> 100%) tracking accumulated mass against storage capacity.
 
 ---
 
-## 4. Refinement Category
+## 4. 🏭 Refinement & Manufacturing Category
 
 ### Oil Refinery
 - **Prefab**: `OilRefinery`
-- **Controller Class**: [`AutoOilRefinery`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoOilRefinery.cs)
-- **Interface**: `ISim200ms`
-
-#### Code Function Logic:
-1. **Null-Safe Component Binding**:
-   - Uses Unity `[MyCmpGet]` for `refinery` and `operational`, preventing crashes if other mods inject components or alter the hierarchy.
-2. **State Machine Interception (`Sim200ms`)**:
-   - Checks `refinery.smi.GetCurrentState()`.
-   - When the refinery enters `ready` state (power connected, crude oil input > 0 kg, ambient gas pressure < 5.0 kg):
-     - Activates building: `operational.SetActive(true)`.
-     - Loops refining animation (`working_loop`).
-     - Cancels Duplicant operate errands via `ChoreSuppression.CancelOperateChores(gameObject)`.
-3. **Efficiency Synchronizer (`SyncEfficiency`)**:
-   - Dynamically reconfigures `ElementConverter` output rates based on player settings:
-     - **Vanilla 50% Rate**: `5 kg/s Petroleum` + `0.09 kg/s Natural Gas`
-     - **Full 100% Rate**: `10 kg/s Petroleum` + `0.18 kg/s Natural Gas`
-
----
+- **Controller Class**: `AutoOilRefinery`
+- **Key Logic**:
+  1. Evaluates state machine: activates when Crude Oil input > 0 kg, power is supplied, and ambient gas pressure < 5.0 kg.
+  2. **Dual Efficiency Modes**:
+     - **Vanilla 50% Rate**: `10 kg/s Crude Oil` → `5 kg/s Petroleum` + `90 g/s Natural Gas`.
+     - **Full 100% Rate**: `10 kg/s Crude Oil` → `10 kg/s Petroleum` + `180 g/s Natural Gas`.
 
 ### Desalinator
 - **Prefab**: `Desalinator`
-- **Logic Components**: [`HardThresholdRelease`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/HardThresholdRelease.cs) & [`VanillaEmptyPaths`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/VanillaEmptyPaths.cs)
-
-#### Code Function Logic:
-1. **Dedicated Threshold Emptying**:
-   - Vanilla mixes salt, input saltwater, and output clean water in the same storage. A blunt `DropAll()` would dump saltwater onto the floor.
-   - `HardThresholdRelease.TryReleaseDesalinator` monitors accumulated salt.
-   - When salt mass reaches threshold (>= 90% capacity or 945 kg):
-     - Invokes `DesalinatorWorkableEmpty.CompleteWork(null)` cleanly.
-     - Drops only the solid Salt items.
-     - Calls `VanillaEmptyPaths.RestoreDroppedInteractions(buffer)`: restores pickup tags and lifts salt out of foundation tiles if embedded.
-     - Resets state machine to `empty` and resumes liquid filtration immediately.
-
----
+- **Components**: `HardThresholdRelease` & `VanillaEmptyPaths`
+- **Key Logic**:
+  1. Prevents spilling saltwater: rather than a generic `DropAll()`, it monitors accumulated salt mass.
+  2. When salt mass reaches threshold (>= 90% capacity or 945 kg), it invokes `DesalinatorWorkableEmpty.CompleteWork(null)`, cleanly dropping only the solid Salt and lifting it out of foundation tiles.
 
 ### Compost
 - **Prefab**: `Compost`
-- **Controller Class**: [`CompostAutomationComponent`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/CompostAutomationComponent.cs)
-- **Interface**: `ISim200ms`
+- **Controller Class**: `CompostAutomationComponent`
+- **Key Logic**:
+  1. **Primary Progress Bar**: Displays decomposition progress from polluted dirt to clean dirt (0% -> 100%).
+  2. **Automated Pitchfork Flipping**: When the compost becomes `inert`, starts an automated 10-second flip cycle with a **Sky Blue progress bar**. Displays countdown timer in the building status item.
 
-#### Code Function Logic:
-1. **Primary Conversion Bar**:
-   - Tracks transformation of polluted dirt into clean dirt (0% -> 100%).
-2. **Automated Pitchfork Flip**:
-   - When the pile enters `inert` state (waiting for a Duplicant to turn the compost):
-     - Starts a 10-second automated flipping timer (`AutoFlipDuration = 10f`).
-     - Activates secondary **Sky Blue flip progress bar** directly under the conversion bar.
-     - Plays pitchfork shovel animation (`working_loop`).
-     - When timer reaches 10s, smoothly transitions state machine back to `composting`.
-     - Displays time remaining until next flip in the Status panel.
-
----
-
-### Bleach Stone Hopper / Gleaner (Milk Fat Separator)
-- **Prefab**: `MilkFatSeparator`
-- **Components**: [`GleanerProgressBarComponent`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/GleanerProgressBarComponent.cs) & [`AutoStorageReleaseController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoStorageReleaseController.cs)
-
-#### Code Function Logic:
-- Operates automatically, rendering a custom progress bar during separation and dropping solid outputs (Bleach Stone / Brackwax) without spilling liquid buffers.
+```mermaid
+stateDiagram-v2
+    [*] --> Composting: Input Polluted Dirt Stocked
+    Composting --> Inert: Conversion Progresses to 100%
+    
+    state Inert {
+        [*] --> AutoFlipping: Start 10s Flip Timer
+        AutoFlipping --> AutoFlipping: Render Sky Blue Progress Bar
+        AutoFlipping --> Flipped: Timer Reaches 10s
+    }
+    
+    Flipped --> Composting: Reset State Machine & Clean Dirt Ready
+```
 
 ---
 
-### Ice Liquefier (Ice Kettle)
-- **Prefab**: `IceKettle`
-- **Controller Class**: [`VanillaEmptyPaths.ReleaseIceKettle`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/VanillaEmptyPaths.cs)
+## 5. 🐾 Ranching & Stations Category
 
-#### Code Function Logic:
-- The Ice Liquefier has 3 storages: fuel (lumber), ice, and melted liquid.
-- The mod inspects `smi.LiquidTankHasCapacityForNextBatch`.
-- When the liquid output tank is completely full, drops the bottled liquid only (`storages[2]`), leaving fuel and unmelted ice intact inside the machine.
+```mermaid
+flowchart TD
+    A[AutoRanchStation 1Hz Tick] --> B[Scan Room Cavity for Eligible Critters]
+    B --> C{Eligible Critter Found Missing Buff?}
+    C -->|No| D[Standby: Room Critters Fully Tended]
+    C -->|Yes| E{Duplicant Worker Present?}
+    E -->|Yes| F[Yield to Duplicant]
+    E -->|No| G[Apply Ranching Buff to Critter: 6 Cycles]
+    G --> H[Dispense Yields: Wool / Reed Fiber / Milk]
+    H --> I[RanchCompletionGuard: Clean Disconnect on Movement]
 
----
-
-## 5. Stations & Ranching Category
+    style A fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style D fill:#2d3748,stroke:#4a5568,color:#fff
+    style G fill:#22543d,stroke:#38a169,color:#fff
+```
 
 ### Ranching Stations (Grooming, Shearing, Milking)
 - **Prefabs**: `RanchStation`, `ShearingStation`, `MilkingStation`, plus Underwater DLC variants
-- **Controller Class**: [`AutoRanchStation`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoRanchStation.cs) & `RanchCompletionGuard`
-
-#### Code Function Logic:
-1. **Critter Room Scan (`Sim1000ms`)**:
-   - Checks room cavity boundaries for eligible critters.
-   - Filters critters missing the ranching buff (`Groomed`, `Sheared`, `Milked`).
-2. **Automated Ranching Errand**:
-   - Tends 1 eligible critter per interval.
-   - Applies the 6-cycle ranching effect directly to the creature's `Effects` component.
-   - Dispenses resource outputs (wool, reed fiber, brackish milk) to the station floor.
-   - `RanchCompletionGuard` ensures that if a critter moves or despawns during the operation, state machines unbind cleanly without memory leaks.
-   - Duplicant ranching errands are cancelled via `ChoreSuppression`.
-
----
+- **Controller Class**: `AutoRanchStation` & `RanchCompletionGuard`
+- **Key Logic**:
+  1. Evaluates room cavity boundaries for critters lacking the ranching effect (`Groomed`, `Sheared`, `Milked`).
+  2. Tends 1 eligible critter per interval, applying the 6-cycle buff directly to the critter's `Effects` component and dispensing yields to the floor.
+  3. `RanchCompletionGuard` prevents memory leaks if a critter moves, burrows, or despawns mid-operation.
 
 ### Farm Station & Power Control Station
 - **Prefabs**: `FarmStation`, `PowerControlStation`
-- **Controller Class**: [`AutoTinkerStationController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoTinkerStationController.cs)
+- **Controller Class**: `AutoTinkerStationController`
+- **Key Logic**:
+  1. Checks colony demand: Farm Station checks whether greenhouse plants require Micronutrient Fertilizer; Power Station checks whether generators require Microchips (configurable via "Ignore Demand" settings).
+  2. Consumes refined metal or phosphorite from storage, constructs tools at `transform.GetPosition() + Vector3.up`, and suppresses manual Duplicant chores cleanly via precondition patching.
 
-#### Code Function Logic:
-1. **Demand Evaluation**:
-   - **Farm Station**: Checks if plants on the asteroid require Micronutrient Fertilizer (waivable via "Ignore Crop Demand" setting).
-   - **Power Station**: Checks if generators require Microchips (waivable via "Ignore Power Demand" setting).
-2. **Material Consumption & Tool Fabrication**:
-   - Consumes `station.massPerTinker` of refined metal or phosphorite from internal storage.
-   - Spawns the tool item at `transform.GetPosition() + Vector3.up` with matched temperature.
-   - Plays production animation and updates optional fabrication progress bar.
-3. **Precondition Chore Suppression**:
-   - Uses `StationChoreSuppressionPatches` to return `false` on chore availability, preventing Duplicants from claiming the station while avoiding `NullReferenceException` in `SetupChore`.
-
----
-
-### Mission Control Station (Rockets)
+### Mission Control Station
 - **Prefabs**: `MissionControl`, `MissionControlCluster`
-- **Controller Class**: [`AutoMissionControlController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoMissionControlController.cs)
-
-#### Code Function Logic:
-1. **Assertion-Safe Architecture**:
-   - Vanilla `MissionControlWorkable` asserts on `TargetSpacecraft` and crashes if ticked without an active Duplicant worker.
-   - `AutoMissionControlController` **never touches the Workable**.
-2. **State Machine Query & Buff Application**:
-   - Queries `smi.sm.WorkableRocketsAreInRange.Get(smi)`.
-   - If a boostable rocket is orbiting or in range:
-     - Waits the vanilla duration (90 seconds).
-     - Calls `planetary.ApplyEffect(craft)` or `cluster.ApplyEffect(clustercraft)`, applying the 10-minute speed boost.
+- **Controller Class**: `AutoMissionControlController`
+- **Key Logic**: Completely avoids vanilla `MissionControlWorkable` (which crashes without an active Duplicant). Instead, directly queries `smi.sm.WorkableRocketsAreInRange` and applies the 10-minute rocket speed boost cleanly.
 
 ---
 
-### Geotuner & Biobot Builder
-- **Prefabs**: `GeoTuner`, `MorbRoverMaker`
-- **Controllers**: [`AutoGeoTuner`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoGeoTuner.cs) & [`AutoMorbRoverMaker`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoMorbRoverMaker.cs)
+## 6. 🧪 Research, Science & Astronomy Category
 
-#### Code Function Logic:
-- **Geotuner**: Automates scientist geyser study and amplification interaction; displays tuning progress and geyser linkage on building meters.
-  - **Audio & Static Constructor Safety (v2.4.39)**: Features dynamic sound path auto-healing and defensive event prefix via `GeoTunerSoundSafetyPatch` to completely eliminate vanilla/FMOD null pointer Black Hole crashes when tuning geysers.
-  - **Delivery Fetch Stability & Priority Persistence (v2.4.40)**: Strictly guards `ManualDeliveryKG` tags and capacities with inequality checks to prevent fetch chore cancellation loops and priority flickering on 200ms simulation cadence.
-- **Biobot Builder**: Consumes steel and zombie spore biomass automatically to construct Morb Rovers.
-
----
-
-## 6. Research & Science Category
-
-### Basic & Advanced Research Centers
+### Research Center & Supercomputer
 - **Prefabs**: `ResearchCenter`, `AdvancedResearchCenter`, `CosmicResearchCenter`, `DLC1CosmicResearchCenter`
-- **Controller Class**: [`AutoResearchController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoResearchController.cs)
-
-#### Code Function Logic:
-1. **Dual Delivery Injection (Advanced Research Center)**:
-   - Vanilla flags bottled water deliveries as `ResearchFetch`, which Auto-Sweepers cannot perform.
-   - `BuildingPrefabInjection.InjectResearchDelivery` attaches a secondary `ManualDeliveryKG` configured with `MachineFetch`.
-   - **Result**: Duplicants can still deliver water, but Auto-Sweepers can also deliver bottled water directly from reservoirs or bottle fillers!
-2. **Point Generation (`Step(float dt)`)**:
-   - Reads active tech project from `Research.Instance.GetActiveResearch()`.
-   - Consumes dirt/water/data banks from storage.
-   - Calls `Research.Instance.AddResearchPoints(researchTypeId, points)`.
-   - Spawns research floating FX popups and advances research progress bar.
-
----
-
-### Materials Study Terminal (Nuclear Research)
-- **Prefab**: `NuclearResearchCenter`
-- **Controller Class**: [`AutoNuclearResearchCenterController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoNuclearResearchCenterController.cs)
-
-#### Code Function Logic:
-1. **Radbolt Tracking**:
-   - Monitors `HighEnergyParticleStorage.Particles`.
-   - Verifies whether current active research requires nuclear research points.
-2. **Particle Consumption & Progress**:
-   - Consumes radbolts at `materialPerPoint` (10 particles/point).
-   - Generates nuclear research points and displays `sprite_Research` popup FX.
-   - Suppresses Duplicant researcher errands.
-
----
-
-### Botanical Analyzer (Genetic Analysis Station)
-- **Prefab**: `GeneticAnalysisStation`
-- **Controller Class**: [`AutoGeneticAnalysisStationController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoGeneticAnalysisStationController.cs)
-
-#### Code Function Logic:
-1. **Seed Inspection**:
-   - Confirms an unidentified seed (`GameTags.UnidentifiedSeed`) with `MutantPlant` component is present in storage.
-2. **Analysis Progression**:
-   - Ticks `workable.WorkTimeRemaining` until zero.
-   - Invokes `workable.CompleteWork(null)` cleanly inside a `SafeInvoke` block, discovering the plant's genetic traits.
-
----
+- **Controller Class**: `AutoResearchController`
+- **Key Features**:
+  1. **Dual Delivery Injection (Supercomputer)**: Vanilla water delivery uses `ResearchFetch` (Duplicant only). The mod attaches a secondary `ManualDeliveryKG` with `MachineFetch`, allowing Auto-Sweepers to deliver bottled water directly from reservoirs!
+  2. **Point Generation**: Queries `Research.Instance.GetActiveResearch()`, consumes dirt/water/data banks, adds research points, and displays floating research FX popups.
 
 ### Telescopes (Planetary & Enclosed)
 - **Prefabs**: `Telescope`, `ClusterTelescope`, `ClusterTelescopeEnclosed`
 - **Controller Class**: `AutoTelescopeController`
-
-#### Code Function Logic:
-- Ticks celestial scanning progress as long as line-of-sight to space is unobstructed and oxygen/power requirements are fulfilled.
+- **Key Logic**: Advances celestial scanning automatically as long as line-of-sight to space is clear and oxygen/power requirements are fulfilled. Correctly displays the enclosed observatory icon in Spaced Out!
 
 ---
 
-## 7. Utilities Category
+## 7. 🛠️ Utilities Category
 
 ### Oil Well Cap
 - **Prefab**: `OilWellCap`
-- **Controller Class**: [`AutoOilWellCap`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoOilWellCap.cs)
-- **Interface**: `ISim1000ms`
+- **Controller Class**: `AutoOilWellCap` (Cadence: `ISim1000ms`)
+- **Key Logic**:
+  1. Monitors backpressure via `smi.GetPressurePercent()`.
+  2. When pressure exceeds the configured threshold slider, engages `smi.sm.working.Set(true, smi)` to vent natural gas down to 0%.
+  3. Renders a Backpressure meter at the building base and displays a status countdown timer.
 
-#### Code Function Logic:
-1. **Pressure Monitoring**:
-   - Queries `smi.GetPressurePercent()`.
-   - Compares with player slider threshold (`wellCap.GetSliderValue(0)`).
-2. **Depressurization Cycle**:
-   - When pressure >= threshold:
-     - Sets `smi.sm.working.Set(true, smi)`.
-     - Vents natural gas until pressure drops to 0%.
-     - Suppresses manual Duplicant release errands.
-3. **Meters & Status**:
-   - Renders Backpressure progress bar at the base of the building scaled to the threshold.
-   - Displays a countdown timer in the Status item showing seconds remaining until venting.
-
----
-
-### Ice-E Fan (Ice Cooled Fan)
+### Ice-E Fan
 - **Prefab**: `IceCooledFan`
-- **Controller Class**: [`AutoIceCooledFanController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoIceCooledFanController.cs)
-
-#### Code Function Logic:
-1. **Cooling Step**:
-   - Calls `fan.DoCooling(dt)` and consumes internal ice mass.
-2. **Freeze Protection Waiver**:
-   - Honors vanilla 5°C ambient shutoff to prevent freezing, or cools continuously if "Ignore Too Cold" is enabled.
+- **Controller Class**: `AutoIceCooledFanController`
+- **Key Logic**: Cools ambient air automatically using stored ice. Supports continuous cooling or honors vanilla 5°C freeze shutoff.
 
 ---
 
-## 8. Auto-Sweeper Crop Harvesting
+## 8. 🌾 Universal Auto-Sweeper Crop Harvesting
+
+```mermaid
+flowchart TD
+    A[AutoSweeperHarvestController 1Hz Tick] --> B[Query SolidTransferArm Sweep Area]
+    B --> C[Adapt to ZonedArm / AdjustableArm Dynamic Grid]
+    C --> D[Filter Fully Grown Crops: Maturity == 100%]
+    D --> E{Check Dual-Cell Reachability}
+    E -->|Plant Cell OR Foundation Cell Unreachable| F[Skip Plant]
+    E -->|Both Cells Reachable| G[Trigger Instant Harvest]
+    G --> H[Drop Crops & Seeds for Conveyor Loader]
+    
+    subgraph Robotic Safety Guard
+        I[StandardWorker.AttachOverrideAnims] -->|SolidTransferArm Worker| J{Has SymbolOverrideController?}
+        J -->|No| K[StandardWorkerAttachOverrideAnimsPatch: Suppress Multi-Tool Anims]
+        J -->|Yes| L[Safe Execution: Zero Assertion Crashes]
+    end
+
+    style A fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style G fill:#22543d,stroke:#38a169,color:#fff
+    style K fill:#22543d,stroke:#38a169,color:#fff
+```
 
 ### Universal Plant Harvesting Engine
 - **Target**: `SolidTransferArm`
-- **Controller Class**: [`AutoSweeperHarvestController`](https://github.com/Eurekalo/Automatic_Industry/blob/main/AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/src/Components/AutoSweeperHarvestController.cs)
-
-#### Code Function Logic:
-1. **Dual-Cell Reachability Check**:
-   - Scans plants in arm range.
-   - Verifies reachability for **both the plant coordinate cell and the planter box / hydroponic tile foundation cell**.
-   - Dynamically adapts to custom range boundaries from **Zoned Solid Transfer Arm** and **Adjustable Transfer Arm** mods.
-2. **Automated Harvesting**:
-   - When plant maturity reaches 100%, triggers crop harvest without Duplicant farmer errand.
-   - Drops food and seeds directly into the sweep area for Conveyor Loader delivery.
-3. **Robotic Worker Safety & Animation Override Guard**:
-   - Under third-party delivery mods (e.g. *No Manual Delivery*), Auto-Sweepers execute item pickup and transfer errands.
-   - Vanilla `StandardWorker.AttachOverrideAnims` attempts to bind Duplicant multi-tool animation symbols to the sweeper's `KAnimControllerBase`. Because sweepers lack a `SymbolOverrideController`, this throws an engine assert crash:
-     ```
-     Assert failed: Anim overrides containing additional symbols require a symbol override controller.
-     ```
-   - **`StandardWorkerAttachOverrideAnimsPatch`** suppresses attaching override animations whenever `worker.UsesMultiTool() == false` or the worker lacks `SymbolOverrideController`.
-   - **`BuildingPrefabInjection`** attaches `SymbolOverrideController` to `SolidTransferArm` completed prefabs on spawn, guaranteeing dual-layer stability across all automated logistics mods.
-
+- **Controller Class**: `AutoSweeperHarvestController`
+- **Key Features**:
+  1. **Dual-Cell Reachability**: Validates reachability for both the crop cell and the planter box / hydroponic tile foundation cell, preventing sweeping deadlocks.
+  2. **Dynamic Range Integration**: Automatically reads custom reach boundaries from *Zoned Solid Transfer Arm* and *Adjustable Transfer Arm*.
+  3. **Robotic Worker Safety Shield**: `StandardWorkerAttachOverrideAnimsPatch` suppresses attaching Duplicant multi-tool animations to robotic arms, completely eliminating the engine assert crash:  
+     `Assert failed: Anim overrides containing additional symbols require a symbol override controller`.

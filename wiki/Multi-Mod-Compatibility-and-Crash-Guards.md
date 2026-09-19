@@ -6,211 +6,199 @@ This technical reference details the dedicated compatibility layers, runtime shi
 
 ---
 
-## 📑 Index of Supported Mod Integrations
+## 🛡️ Compatibility Matrix at a Glance
 
-1. [No Manual Delivery (2047308624)](#1-no-manual-delivery-steam-id-2047308624)
-2. [PLib UI Layout & Mod Options Dialog](#2-plib-ui-layout--options-dialog-resilience)
-3. [Customize Buildings (1818138009)](#3-customize-buildings-steam-id-1818138009)
-4. [I_实用系统 (3300147615)](#4-i_实用系统-practical-systems-steam-id-3300147615)
-5. [Multithreaded Simulation (SimDLL_Rust / 3779276157)](#5-multithreaded-simulation-simdll_rust)
-6. [EmptyStorage (1748202748)](#6-emptystorage-steam-id-1748202748)
-7. [Adjustable Transfer Arm & Zoned Solid Transfer Arm](#7-adjustable-transfer-arm--zoned-solid-transfer-arm)
-8. [Mod Menu (v1.4.13) & In-Game Pause Screen](#8-mod-menu-v1413--in-game-pause-screen-integration)
-9. [FastTrack Engine Optimization](#9-fasttrack-engine-optimization)
-10. [ONI Together (Multiplayer)](#10-oni-together-multiplayer)
-11. [Chemical Processing & BuildingEditor Safe UI Parenting](#11-chemical-processing--buildingeditor-safe-ui-parenting)
-12. [SymbolOverrideController Deserialization & SaveLoad Auto-Healing](#12-symboloverridecontroller-deserialization--saveload-auto-healing)
-13. [GeoTuner Premature Class Constructor Sound Path Auto-Healing](#13-geotuner-premature-class-constructor-sound-path-auto-healing)
+| Mod | Steam ID | Challenge / Crash Risk | Automatic Industry Solution | Status |
+| :--- | :---: | :--- | :--- | :---: |
+| **No Manual Delivery** | `2047308624` | Null prober crash on load; robotic arm multi-tool anim assert. | Dual-tier fallback prober + `StandardWorkerAttachOverrideAnimsPatch`. | 🛡️ Active Shim |
+| **PLib Mod Options** | — | Layout collapse; method signature differences (`dialog` vs `optionsDialog`). | `OptionsDialogLayoutFixPatch` enforces 1020x720 layout via defensive reflection. | 🛡️ Active Shim |
+| **Customize Buildings** | `1818138009` | Strips vanilla components; infinite composting state recursion. | Dynamic prefix shims return `false` on conflicting patches; `[MyCmpGet]` safety. | 🛡️ Active Shim |
+| **I_实用系统** | `3300147615` | Potential logic port collisions and state synchronization errors. | Clean `GameHashes.OperationalChanged` hooks; zero custom port overrides. | 🟢 Coexistence |
+| **Multithreaded Sim** | `3779276157` | Race conditions against Rust native worker threads. | Automation loops execute strictly on Unity main thread (`ISim200ms`, `ISim1000ms`). | 🟢 Thread-Safe |
+| **EmptyStorage** | `1748202748` | Dropped items re-picked in infinite loops; entity ID loss. | `VanillaEmptyPaths` exempts player-ejected items from auto-recycling. | 🛡️ Active Shim |
+| **Adjustable / Zoned Arm** | `3745253371` | Hardcoded 4-cell range limits sweep and crop harvesting. | `AutoSweeperHarvestController` dynamically queries custom cell zones. | 🟢 Integrated |
+| **Mod Menu (v1.4.13)** | `3789353358` | UI occlusion; button position misalignment across languages. | Multilingual Options locator + canvas `sortingOrder = 350` layering. | 🎨 Full UI Sync |
+| **FastTrack** | — | High-frequency reflective overhead causing framerate dips. | Full component caching in `Prepare()`; zero reflection in 5Hz tick loops. | ⚡ Optimized |
+| **ONI Together** | — | State desynchronization across multiplayer clients. | State changes broadcast via standard game events and sync packets. | 🟢 Synced |
+| **Ronivan's Legacy Suite** | `3557584850` | Missing UI canvas on `BuildingEditor`; `usingNewSymbolOverrideSystem` assert. | Safe UI parenting resolver + `SymbolOverrideController` auto-healing. | 🛡️ Active Shim |
+| **GeoTuner Audio Safety** | — | Early mod reflection touches `GeoTuner`, freezing sound paths to `null`. | Dynamic sound path auto-healing + prefix null-path muting. | 🛡️ Active Shim |
 
 ---
 
 ## 1. No Manual Delivery (Steam ID 2047308624)
 
-### Challenges:
-*No Manual Delivery* dynamically disables Duplicant deliveries to designated storage containers and fabricators, redirecting chores exclusively to Auto-Sweepers (`SolidTransferArm`). This introduces two critical edge cases:
-1. **Uninitialized Prober on Save Game Load**: In early scene initialization or when Duplicant hold mode is inactive, `TransferArmGroupProber.Get()` returns `null`. Downstream pathing calls throw `NullReferenceException` during chore generation.
-2. **Animation Override Assertion Crash on Robotic Pickups**: When `No Manual Delivery` assigns fetch chores to `SolidTransferArm`, the robotic arm executes `StandardWorker.AttachOverrideAnims(worker_controller)`. Because `SolidTransferArm` lacks a `SymbolOverrideController`, Unity's `KAnimControllerBase` throws an assertion failure:
-   ```
-   Assert failed: Anim overrides containing additional symbols require a symbol override controller.
-   ```
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SaveLoad as SaveGame Loader
+    participant NMD as NoManualDelivery Prober
+    participant AI as NoManualDeliveryCompatibility
+    participant Worker as StandardWorker
+    participant Patch as StandardWorkerAttachOverrideAnimsPatch
+
+    Note over SaveLoad: World Generation / Scene Load
+    SaveLoad->>NMD: TransferArmGroupProber.Get()
+    alt Prober Uninitialized
+        NMD-->>AI: Returns null
+        AI->>AI: Fallback 1: MinionGroupProber.Get()
+        AI->>AI: Fallback 2: GetFallbackProber()
+        AI-->>SaveLoad: Returns Guaranteed Non-Null Prober (Zero Crashes!)
+    end
+
+    Note over Worker: Auto-Sweeper Picks Up Item
+    Worker->>Patch: AttachOverrideAnims(worker_controller)
+    alt Worker is Robotic Arm (SolidTransferArm)
+        Patch->>Patch: Check: worker.UsesMultiTool() == false
+        Patch-->>Worker: Return false (Skip Attaching Multi-Tool Symbols)
+        Note over Worker: Bypasses "require symbol override controller" assert crash!
+    end
+```
 
 ### Engineering Solutions:
-- **`NoManualDeliveryCompatibility.cs`**:
-  - Intercepts `TransferArmGroupProber.Get()` via a Harmony postfix:
-  ```csharp
-  if (__result == null)
-  {
-      __result = MinionGroupProber.Get();
-      if (__result == null)
-      {
-          __result = GetFallbackProber();
-      }
-  }
-  ```
-  - Provides a dual-tiered non-null prober guarantee, completely preventing `NullReferenceException` on save load.
-- **`StandardWorkerAttachOverrideAnimsPatch`**:
-  - Intercepts `StandardWorker.AttachOverrideAnims(KAnimControllerBase worker_controller)`:
-  ```csharp
-  if (!worker.UsesMultiTool() || worker_controller == null || worker_controller.GetComponent<SymbolOverrideController>() == null)
-  {
-      return false; // Skip attaching duplicant override animations on robotic arms
-  }
-  ```
-- **Proactive Symbol Controller Injection**:
-  - In `BuildingPrefabInjection.cs`, `SolidTransferArm` completed building prefabs automatically receive a `SymbolOverrideController` if absent, providing defense-in-depth across all third-party fetch mods.
+1. **Dual-Tiered Fallback Prober**:
+   - `NoManualDeliveryCompatibility.cs` intercepts `TransferArmGroupProber.Get()`. If `null`, it substitutes `MinionGroupProber.Get()` or an internal fallback prober, completely eliminating `NullReferenceException` during early scene loading.
+2. **Robotic Multi-Tool Animation Guard**:
+   - `StandardWorkerAttachOverrideAnimsPatch` checks `worker.UsesMultiTool()`. If false or if the worker lacks `SymbolOverrideController`, it aborts attaching Duplicant tool animations, eliminating the engine assertion crash.
+3. **Proactive Symbol Controller Injection**:
+   - `BuildingPrefabInjection` automatically attaches a `SymbolOverrideController` to `SolidTransferArm` prefabs on spawn for defense-in-depth.
 
 ---
 
 ## 2. PLib UI Layout & Options Dialog Resilience
 
 ### Challenge:
-When customizing mod options, bilingual descriptions and localized strings can push checkboxes, sliders, and color preview pickers outside the dialog's visible rect. Furthermore, upstream PLib version differences can alter method parameters on `OptionsDialog.AddModInfoScreen(PDialog dialog)`.
+Bilingual descriptions and long localization strings can push options controls outside the visible dialog window. Upstream PLib parameter signatures also vary between `PDialog dialog` and `OptionsDialog optionsDialog`.
 
 ### Engineering Solution:
 - **`OptionsDialogLayoutFixPatch.cs`**:
-  - Hooks `PeterHan.PLib.Options.OptionsDialog.AddModInfoScreen`:
-  - Dynamically enforces minimum dialog dimensions (1020x720) with horizontal 2-column layout and preview margins.
-  - Postfix parameter explicitly binds to `object dialog` (matching `PDialog dialog`).
-  - Patch application is decoupled from Harmony auto-discovery and registered manually inside `SafeInvoke.Try` in `AutoMachineMod.OnLoad()`. Even if future PLib updates alter upstream internal signatures, the mod loads cleanly without aborting.
+  - Dynamically enforces minimum dialog dimensions (1020x720) with horizontal two-column layout.
+  - Postfix parameters bind cleanly to `object dialog`.
+  - Registered via `SafeInvoke.Try` in `AutoMachineMod.OnLoad()` so future PLib updates load cleanly without crashing.
 
 ---
 
 ## 3. Customize Buildings (Steam ID 1818138009)
 
-### Challenge:
-*Customize Buildings* forcefully removes vanilla workable components (such as `OilRefinery`, `OilWellCap`, `IceCooledFan`) and alters recipe parameters at the `BuildingDef` level. This previously caused missing component exceptions (`[MyCmpReq]` crashes) and state machine deadlocks (e.g. `Compost` infinite recursive composting loop).
+```mermaid
+flowchart TD
+    A[Customize Buildings Harmony Patches] --> B{Patches Conflicting Structure?}
+    B -->|Oil Refinery / Oil Well Cap| C[CustomizeBuildingsCompatibility: Return False]
+    B -->|Compost States Patch| D[Suppress inert.GoTo composting recursion]
+    B -->|Desalinator Patch| E[Suppress Destructive Component Removal]
+    
+    C --> F[Preserve Vanilla Component Architecture]
+    D --> F
+    E --> F
+    F --> G[Automatic Industry Controllers Run Safely]
+
+    style A fill:#742a2a,stroke:#e53e3e,color:#fff
+    style C fill:#2b6cb0,stroke:#1a365d,color:#fff
+    style F fill:#22543d,stroke:#38a169,color:#fff
+```
 
 ### Engineering Solution:
-- **`CustomizeBuildingsCompatibility.cs`**:
-  - Applies runtime Harmony prefix shims returning `false` to cancel destructive modifications:
-    - Suppresses `OilRefineryConfig_ConfigureBuildingTemplate.Postfix` and `OilWellCapConfig_ConfigureBuildingTemplate.Postfix`.
-    - Suppresses `Compost_States_Patch.Postfix` (preventing `inert.GoTo(composting)` loop).
-    - Suppresses `Desalinator_Patch.Postfix`.
-    - Suppresses `NoDupeHelper.SetAutomatic`.
-  - Reflectively neutralizes conflicting state options (`NoDupeOilRefinery`, `NoDupeOilWellCap`, etc.) in `CustomizeBuildingsState.Instance`.
-  - Upgraded component accessors from `[MyCmpReq]` to `[MyCmpGet]` with defensive null checks throughout simulation loops.
+- Applies runtime Harmony prefix shims that return `false` to cancel destructive modifications.
+- Suppresses `Compost_States_Patch.Postfix` to prevent infinite composting loops.
+- Upgrades component accessors from `[MyCmpReq]` to `[MyCmpGet]` with defensive null checks throughout simulation loops.
 
 ---
 
-## 4. I_实用系统 (Practical Systems / Steam ID 3300147615)
+## 4. Mod Menu (v1.4.13) & In-Game Screen Integration
 
-### Mod Overview & Integration:
-*I_实用系统* introduces specialized utility structures, high-throughput piping networks, and advanced automation logic gates. 
+```mermaid
+flowchart TD
+    A[Pause Screen Opened] --> B[Mod Menu Locates Options Button]
+    B --> C{Multilingual Matching}
+    C -->|Delegate Reflection| D[bi.onClick.Method.Name == 'OnOptions']
+    C -->|Localized Constants| E[STRINGS.UI.FRONTEND.PAUSE_SCREEN.OPTIONS]
+    C -->|Multilingual Keywords| F[选项 / 選項 / OPTION / 設定 / 설정 / НАСТРОЙК / EINSTELLUNG]
+    
+    D --> G[Insert Mod Menu Button at optionsIndex + 1]
+    E --> G
+    F --> G
+    
+    G --> H[Open Configuration Screen]
+    H --> I[Canvas sortingOrder = 350: Render Above All Dialogs]
 
-### Architecture Coexistence:
-- **Zero Port Collisions**: Automatic Industry does not bind custom logic ports or override port definitions on vanilla structures. Buildings automated by Automatic Industry cleanly respect incoming green/red automation signals from *I_实用系统* logic gates.
-- **Operational Event Synchronization**: State transitions in Automatic Industry hook into vanilla `GameHashes.OperationalChanged` and `Operational.SetActive()`, ensuring full state consistency across *I_实用系统* sensor networks.
-
----
-
-## 5. Multithreaded Simulation (SimDLL_Rust)
-
-### Architecture Coexistence:
-*SimDLL_Rust* (Multithreaded Simulation) accelerates element state changes, thermal diffusion, and liquid/gas flow across secondary native threads.
-- **Strict Main-Thread Cadence**: Automatic Industry controllers (`AutoWorkControllerBase`, `ISim200ms`, `ISim1000ms`) execute exclusively on the Unity engine main thread.
-- **Safe Element Querying**: Recipe ingredient validation and output spawning interface with the standard `Storage` and `ElementConsumer` APIs without touching asynchronous Rust worker threads, guaranteeing thread-safe, race-free operation.
-
----
-
-## 6. EmptyStorage (Steam ID 1748202748)
-
-### Integration:
-*EmptyStorage* allows players to manually eject stored resources from buildings.
-- **`VanillaEmptyPaths.cs`**:
-  - Identifies items scheduled for player-requested ejection.
-  - Automatically exempts these items from automated batch recycling, preventing infinite pickup-drop loops and protecting item entity IDs.
-
----
-
-## 7. Adjustable Transfer Arm & Zoned Solid Transfer Arm
-
-### Integration:
-*Adjustable Transfer Arm* and *Zoned Solid Transfer Arm* extend the reach radius and assign custom zone filters to Auto-Sweepers (`SolidTransferArm`).
-- **`AutoSweeperHarvestController.cs`**:
-  - Dynamically inspects the active `SolidTransferArm` bounding volume rather than hardcoding vanilla's 4-cell radius.
-  - Queries `ZonedArm` component boundaries and pick filters, allowing automated crop harvesting across user-defined zones and through pneumatic door setups.
-
----
-
-## 8. Mod Menu (v1.4.13) & In-Game Pause Screen Integration
-
-### Features:
-*Mod Menu* allows inspecting active mods and editing live options directly during gameplay.
-- **Language-Agnostic "Options" Locator**:
-  - Locates the game's "Options" button via callback delegate reflection (`bi.onClick.Method.Name == "OnOptions"`), ONI localized string constants (`STRINGS.UI.FRONTEND.PAUSE_SCREEN.OPTIONS`), and multilingual keyword matching ("选项", "選項", "OPTION", "設定", "설정", "НАСТРОЙК", "EINSTELLUNG").
-  - Inserts the "Mod Menu" button directly below "Options" (`siblingIndex = optionsIndex + 1`), above "Colony Summary".
-  - Failsafe guards ensure the button is never appended to the bottom of the pause screen below "Quit to Desktop".
-- **Dynamic Attribution & Tag Shielding**:
-  - In `UserMenuModAttributionPatch.cs`, when Mod Menu is active, Automatic Industry yields button tag rendering to Mod Menu to prevent duplicate `[Mod: Automatic Industry]` badges.
-
----
-
-## 9. FastTrack Engine Optimization
-
-### Integration:
-*FastTrack* performs deep caching of Unity GameObjects and skips redundant component queries.
-- Controllers cache component references during `Prepare()` (`OnPrefabInit` / `OnSpawn`).
-- Avoids reflective `GetComponent` and `Find` invocations in 200ms simulation loops, maintaining 60+ FPS in late-game colonies.
-
----
-
-## 10. ONI Together (Multiplayer)
-
-### Integration:
-- Automated state transitions generate standard game events (`Trigger`, `Operational.SetActive`).
-- Multiplayer packet synchronization via `BuildingAutomationSyncPacket` coordinates player automation overrides across client sessions without desync.
-
-
----
-
-## 11. Chemical Processing & BuildingEditor Safe UI Parenting
-
-### Challenges:
-*Chemical Processing* (by Ronivan) includes a `BuildingEditor` inspection tool that dynamically instantiates UI windows during gameplay via `ShowWindow()`. In active gameplay or pause screen states, `FrontEndManager.Instance` can be `null`, which caused unhandled `NullReferenceException` crashes when the window attempted to attach itself to the front-end canvas.
+    style A fill:#2d3748,stroke:#4a5568,color:#fff
+    style C fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style G fill:#22543d,stroke:#38a169,color:#fff
+    style I fill:#44337a,stroke:#805ad5,color:#fff
+```
 
 ### Engineering Solutions:
+1. **Multilingual Options Button Locator**:
+   - Locates the pause screen's "Options" button via delegate reflection and multilingual strings.
+   - Places the "Mod Menu" button directly below "Options", never appending it below "Quit to Desktop".
+2. **Canvas Sorting Order (`sortingOrder = 350`)**:
+   - Ensures child configuration dialogs render above both the Pause Menu and ModMenu windows without raycast blocking or visual clipping.
+
+---
+
+## 5. Chemical Processing & BuildingEditor Safe UI Parenting
+
+### Challenge:
+Ronivan's *Chemical Processing* includes a `BuildingEditor` tool that calls `ShowWindow()`. In active gameplay or pause states, `FrontEndManager.Instance` can be `null`, crashing the game when attempting to attach to the front-end canvas.
+
+### Engineering Solution:
 - **`ChemicalProcessingCompatibility.cs`**:
-  - Dynamically detects `ChemicalProcessing` and intercepts `BuildingEditor.ShowWindow()` with a safe UI parenting resolver.
+  - Dynamically intercepts `BuildingEditor.ShowWindow()` with a safe UI parenting resolver.
   - Automatically redirects parenting to `GameScreenManager.Instance.ssOverlayCanvas` or `GetTargetWidget()` when `FrontEndManager.Instance` is unavailable.
-  - Ensures full compatibility with Japanese/CJK community translation packs (`NotoSansCJKjp-Regular`) without string formatting or font metric errors.
 
 ---
 
-## 12. SymbolOverrideController Deserialization & SaveLoad Auto-Healing
+## 6. SymbolOverrideController Deserialization Auto-Healing
 
-### Challenges:
-When loading existing saves containing Ronivan's mods (Metallurgy, Chemical Processing, Nuclear) or custom buildings initialized via `SaveLoadRoot.Load` or `Util.KInstantiate`, the property `usingNewSymbolOverrideSystem` on `KBatchedAnimController` is not serialized and defaults to `false`.
-When `GameObject.SetActive(true)` runs during scene instantiation, Unity executes `Awake()` -> `InitializeComponent()` -> `SymbolOverrideController.OnPrefabInit()`.
-Because `usingNewSymbolOverrideSystem` is `false`, the game throws a fatal assertion:
-```
-Assert failed: SymbolOverrideController requires usingNewSymbolOverrideSystem to be set to true. Try adding the component by calling: SymbolOverrideControllerUtil.AddToPrefab
-```
-Under diagnostic mod catchers (such as LogCatcher or FastTrack strict mode), this assertion terminates the game process during world generation or save loading.
+```mermaid
+flowchart TD
+    A[SaveLoadRoot.Load / Util.KInstantiate] --> B[Instantiate Building / Entity]
+    B --> C[GameObject.SetActive: True]
+    C --> D[SymbolOverrideController.OnPrefabInit]
+    D --> E{usingNewSymbolOverrideSystem == true?}
+    E -->|No: False by Default in Vanilla| F[SymbolOverrideControllerCompatibility Prefix]
+    F --> G[Auto-Heal: set usingNewSymbolOverrideSystem = true]
+    G --> H[Safe Initialization: Zero Assertion Crashes]
+    E -->|Yes| H
 
-### Engineering Solutions:
-- **`SymbolOverrideControllerCompatibility.cs`**:
-  - **`SymbolOverrideController_OnPrefabInit_Prefix`**: Pre-emptively inspects the associated `KBatchedAnimController`. If missing, safely attaches one; if `usingNewSymbolOverrideSystem` is `false`, auto-heals it to `true` before the assertion evaluates.
-  - **`SymbolOverrideControllerUtil_AddToPrefab_Prefix`**: Guarantees that `usingNewSymbolOverrideSystem` is flagged `true` prior to `AddComponent<SymbolOverrideController>()` triggering `Awake()`.
-  - Ensures 100% crash-free save loading for Ronivan's industrial suite across all world types.
+    style A fill:#2d3748,stroke:#4a5568,color:#fff
+    style E fill:#742a2a,stroke:#e53e3e,color:#fff
+    style G fill:#22543d,stroke:#38a169,color:#fff
+    style H fill:#1a365d,stroke:#2b6cb0,color:#fff
+```
+
+### Engineering Solution:
+- Pre-emptively inspects the associated `KBatchedAnimController`. If `usingNewSymbolOverrideSystem` is `false`, auto-heals it to `true` before vanilla's assert evaluates, ensuring 100% crash-free save loading for Ronivan's industrial suite.
 
 ---
 
-## 13. GeoTuner Premature Class Constructor Sound Path Auto-Healing
+## 7. GeoTuner Audio Path Auto-Healing (Black Hole Fix)
 
-### Challenges:
-Vanilla *Oxygen Not Included* defines static audio event paths on the `GeoTuner` class:
-```csharp
-public static string liquidGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Geyser");
-public static string gasGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Vent");
-public static string metalGeyserTuningSoundPath = GlobalAssets.GetSound("GeoTuner_Tuning_Volcano");
+```mermaid
+flowchart TD
+    A[Early Mod Loading: Class Scans Touch GeoTuner] --> B[Static Constructors Run Before Sound Assets Loaded]
+    B --> C[liquidGeyserTuningSoundPath Frozen to NULL]
+    
+    subgraph Vanilla Behavior: CRASH
+        C --> D[Geyser Tuned In-Game]
+        D --> E[SoundEvent.PlayOneShot: null]
+        E --> F[FMOD PathToGUID: NullReferenceException]
+        F --> G[Black Hole Error Screen / Game Crash]
+    end
+
+    subgraph Automatic Industry Solution: HEALED
+        C --> H[GeoTunerSoundSafetyPatch.EnsureSoundPathsPopulated]
+        H --> I[Re-query GlobalAssets.GetSound When Audio Assets Ready]
+        I --> J[Prefix Guard: Check !string.IsNullOrEmpty: soundPath]
+        J --> K[Smooth Audio Playback / Safe Mute: 100% Stable]
+    end
+
+    style A fill:#2d3748,stroke:#4a5568,color:#fff
+    style G fill:#742a2a,stroke:#e53e3e,color:#fff
+    style H fill:#1a365d,stroke:#2b6cb0,color:#fff
+    style K fill:#22543d,stroke:#38a169,color:#fff
 ```
-Because these are static field initializers, they evaluate when the CLR first references `typeof(GeoTuner)`.
-During early mod loading (`OnLoad`), mod reflection passes (such as station chore suppression registration) touched the `GeoTuner` type. At that instant, `GlobalAssets` had not yet loaded game audio banks, so `GetSound(...)` returned `null`, permanently freezing all three static sound paths to `null`.
-Later in-game, when duplicants or automation tuned a geyser, `GeoTuner.TriggerSoundsForGeyserChange()` executed `SoundEvent.PlayOneShot(liquidGeyserTuningSoundPath, ...)`.
-FMOD's `RuntimeManager.PathToGUID(null)` then threw `NullReferenceException` inside `StateMachine.ExecuteActions`, crashing into the "Black Hole" error modal.
 
-### Engineering Solutions:
+### Engineering Solution:
 - **`GeoTunerSoundSafetyPatch.cs`**:
-  - **Auto-Healing (`EnsureSoundPathsPopulated`)**: Checks if the static sound paths are null or empty. If so, re-resolves them against `GlobalAssets.GetSound(...)` once sound assets are loaded.
-  - **Defensive Harmony Prefix**: Prefix patch on `GeoTuner.TriggerSoundsForGeyserChange` verifies `!string.IsNullOrEmpty(soundPath)` before initiating sound playback, safely muting if audio is missing, and returns `false` to bypass vanilla's unguarded code.
-  - **Proactive Hydration**: Injected into `BuildingPrefabInjection` and `AutoGeoTuner.Prepare()`, ensuring paths are valid well before any geyser tuning state machine triggers.
+  - **Auto-Healing**: Re-resolves static sound paths against `GlobalAssets.GetSound()` once audio banks load.
+  - **Defensive Harmony Prefix**: Verifies `!string.IsNullOrEmpty(soundPath)` prior to triggering playback, safely muting if audio is unavailable.

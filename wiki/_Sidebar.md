@@ -1,44 +1,44 @@
-### Automatic Industry Wiki
+### 🚀 Automatic Industry Wiki
 
-- **[Home](Home)**
-- **[Automated Buildings Logic](Automated-Buildings-Logic)**
-  - [Power Buildings](Automated-Buildings-Logic#1-power-category)
-  - [Food & Cooking](Automated-Buildings-Logic#2-food--cooking-category)
-  - [Plumbing & Ventilation](Automated-Buildings-Logic#3-plumbing--ventilation-category)
-  - [Refinement Category](Automated-Buildings-Logic#4-refinement-category)
-  - [Stations & Ranching](Automated-Buildings-Logic#5-stations--ranching-category)
-  - [Research & Science](Automated-Buildings-Logic#6-research--science-category)
-  - [Utilities Category](Automated-Buildings-Logic#7-utilities-category)
-  - [Auto-Sweeper Harvesting](Automated-Buildings-Logic#8-auto-sweeper-crop-harvesting)
-- **[Architecture & Design](Architecture-and-Design)**
+- **[🏠 Home](Home)**
+- **[🎛️ Building Configuration & Controls](Building-Configuration-and-Controls)**
+  - [Dual-Pane Configuration Editor](Building-Configuration-and-Controls#%EF%B8%8F-1-dual-pane-building-configuration-editor)
+  - [In-Game Details Automation Button](Building-Configuration-and-Controls#%EF%B8%8F-2-in-game-building-details-automation-button)
+  - [Shift + Left Click Shortcut](Building-Configuration-and-Controls#click-mechanics--shortcuts)
+  - [Priority Resolution Chain](Building-Configuration-and-Controls#-3-configuration-priority-resolution)
+- **[⚙️ Automated Buildings Logic](Automated-Buildings-Logic)**
+  - [⚡ Power & Energy](Automated-Buildings-Logic#1-power-category)
+  - [🍲 Food, Cooking & Preservation](Automated-Buildings-Logic#2-food--cooking-category)
+  - [🚰 Plumbing & Ventilation](Automated-Buildings-Logic#3-plumbing--ventilation-category)
+  - [🏭 Refinement & Manufacturing](Automated-Buildings-Logic#4-refinement-category)
+  - [🐾 Ranching & Stations](Automated-Buildings-Logic#5-stations--ranching-category)
+  - [🧪 Research & Science](Automated-Buildings-Logic#6-research--science-category)
+  - [🛠️ Utilities & Heating/Cooling](Automated-Buildings-Logic#7-utilities-category)
+  - [🌾 Auto-Sweeper Crop Harvesting](Automated-Buildings-Logic#8-auto-sweeper-crop-harvesting)
+- **[🏛️ Architecture & System Design](Architecture-and-Design)**
   - [Core Principles](Architecture-and-Design#%EF%B8%8F-1-core-engineering-principles)
   - [Prefab Injection Pipeline](Architecture-and-Design#-2-prefab-injection-pipeline)
-  - [UserMenu Customizer](Architecture-and-Design#%EF%B8%8F-3-per-building-usermenu-customizer-autobuildingcustomizer)
+  - [Per-Building Customizer](Architecture-and-Design#%EF%B8%8F-3-per-building-usermenu-customizer-autobuildingcustomizer)
   - [Chore Suppression System](Architecture-and-Design#-4-chore-suppression-system)
-  - [Circuit Breaker](Architecture-and-Design#-5-circuit-breaker-safeinvoke--controller-lifecycle)
+  - [Circuit Breaker Lifecycle](Architecture-and-Design#-5-circuit-breaker-safeinvoke--controller-lifecycle)
   - [Mod Compatibility Shims](Architecture-and-Design#-6-mod-compatibility-shims)
-- **[Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
+- **[🛡️ Multi-Mod Compatibility & Crash Guards](Multi-Mod-Compatibility-and-Crash-Guards)**
+  - [Compatibility Matrix](Multi-Mod-Compatibility-and-Crash-Guards#%EF%B8%8F-compatibility-matrix-at-a-glance)
   - [No Manual Delivery](Multi-Mod-Compatibility-and-Crash-Guards#1-no-manual-delivery-steam-id-2047308624)
-  - [PLib OptionsDialog](Multi-Mod-Compatibility-and-Crash-Guards#2-plib-ui-layout--options-dialog-resilience)
+  - [PLib UI Layout Resilience](Multi-Mod-Compatibility-and-Crash-Guards#2-plib-ui-layout--options-dialog-resilience)
   - [Customize Buildings](Multi-Mod-Compatibility-and-Crash-Guards#3-customize-buildings-steam-id-1818138009)
-  - [I_实用系统](Multi-Mod-Compatibility-and-Crash-Guards#4-i_实用系统-practical-systems-steam-id-3300147615)
+  - [I_实用系统 Practical Systems](Multi-Mod-Compatibility-and-Crash-Guards#4-i_实用系统-practical-systems-steam-id-3300147615)
   - [Multithreaded Simulation](Multi-Mod-Compatibility-and-Crash-Guards#5-multithreaded-simulation-simdll_rust)
   - [EmptyStorage](Multi-Mod-Compatibility-and-Crash-Guards#6-emptystorage-steam-id-1748202748)
   - [Adjustable & Zoned Sweeper](Multi-Mod-Compatibility-and-Crash-Guards#7-adjustable-transfer-arm--zoned-solid-transfer-arm)
-  - [Mod Menu (v1.4.9)](Multi-Mod-Compatibility-and-Crash-Guards#8-mod-menu-v149--in-game-pause-screen-integration)
-  - [FastTrack](Multi-Mod-Compatibility-and-Crash-Guards#9-fasttrack-engine-optimization)
-  - [ONI Together](Multi-Mod-Compatibility-and-Crash-Guards#10-oni-together-multiplayer)
-- **[Compatible Mods Roster](Compatible-Mods)**
-  - [Multithreaded Sim](Compatible-Mods#1-多线程模拟-multithreaded-simulation-rc-26)
-  - [FastTrack](Compatible-Mods#2-fasttrack)
-  - [ModMenu](Compatible-Mods#3-modmenu)
-  - [Ronivan's Legacy](Compatible-Mods#4-ronivans-legacy---industrial-revolution)
-  - [Auto Compost](Compatible-Mods#5-自动堆肥--auto-compost)
-  - [Empty Storage](Compatible-Mods#6-empty-storage)
-  - [Zoned Auto Sweeper](Compatible-Mods#7-zoned-auto-sweeper)
-  - [No Manual Delivery](Compatible-Mods#8-no-manual-delivery)
-- **[Incorporated Obsolete Mods](Incorporated-Features-from-Obsolete-Mods)**
-  - [Auto-Sweeper Harvest](Incorporated-Features-from-Obsolete-Mods#1-auto-sweeper-harvest)
+  - [Mod Menu (v1.4.13)](Multi-Mod-Compatibility-and-Crash-Guards#8-mod-menu-v1413--in-game-pause-screen-integration)
+  - [FastTrack Optimization](Multi-Mod-Compatibility-and-Crash-Guards#9-fasttrack-engine-optimization)
+  - [ONI Together Multiplayer](Multi-Mod-Compatibility-and-Crash-Guards#10-oni-together-multiplayer)
+  - [Chemical Processing & BuildingEditor](Multi-Mod-Compatibility-and-Crash-Guards#11-chemical-processing--buildingeditor-safe-ui-parenting)
+  - [SymbolOverrideController Healing](Multi-Mod-Compatibility-and-Crash-Guards#12-symboloverridecontroller-deserialization--saveload-auto-healing)
+  - [GeoTuner Audio Safety](Multi-Mod-Compatibility-and-Crash-Guards#13-geotuner-premature-class-constructor-sound-path-auto-healing)
+- **[📦 Compatible Mods Roster](Compatible-Mods)**
+  - [Community Compatibility Cards](Compatible-Mods#-compatibility-cards)
+- **[📜 Incorporated Features from Obsolete Mods](Incorporated-Features-from-Obsolete-Mods)**
+  - [Auto-Sweeper Harvest Engine](Incorporated-Features-from-Obsolete-Mods#1-auto-sweeper-harvest)
   - [Liquid Reservoir Boost](Incorporated-Features-from-Obsolete-Mods#2-liquid-reservoir-boost-储液库增强)
-
-
