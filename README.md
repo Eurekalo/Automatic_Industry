@@ -211,4 +211,4 @@ powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.0.ps1
 - **License**: [MIT License](LICENSE)
 - **Original Concept**: [auto machine机器自动工作](https://steamcommunity.com/sharedfiles/filedetails/?id=2992024030) by **一见倾心**
 - **In-Game Options**: [PLib](https://github.com/peterhaneve/ONI-Mods/tree/main/PLib) by Peter Han (MIT License)
-- *Powered by Lovable / Claude Opus / Gemini Flash*
+- *Powered by Cursor*
