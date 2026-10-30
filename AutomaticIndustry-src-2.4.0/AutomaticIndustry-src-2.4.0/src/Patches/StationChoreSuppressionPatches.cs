@@ -50,6 +50,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(SpiceGrinder), "CreateChore")]
         public static class SpiceGrinder_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(SpiceGrinder), "CreateChore") != null;
+
             public static void Postfix(SpiceGrinder.StatesInstance smi, ref Chore __result)
             {
                 if (__result != null && smi != null)
@@ -63,6 +65,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(ResearchCenter), "CreateChore")]
         public static class ResearchCenter_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(ResearchCenter), "CreateChore") != null;
+
             public static void Postfix(ResearchCenter __instance, ref Chore __result)
             {
                 if (__result != null && __instance != null)
@@ -76,6 +80,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(NuclearResearchCenter.StatesInstance), nameof(NuclearResearchCenter.StatesInstance.CreateChore))]
         public static class NuclearResearchCenter_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(NuclearResearchCenter.StatesInstance), nameof(NuclearResearchCenter.StatesInstance.CreateChore)) != null;
+
             public static void Postfix(NuclearResearchCenter.StatesInstance __instance)
             {
                 if (__instance != null)
@@ -90,6 +96,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(GeneticAnalysisStation), "CreateChore")]
         public static class GeneticAnalysisStation_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(GeneticAnalysisStation), "CreateChore") != null;
+
             public static void Postfix(GeneticAnalysisStation.StatesInstance smi, ref Chore __result)
             {
                 if (__result != null && smi != null)
@@ -103,6 +111,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(GeoTuner), "CreateResearchChore")]
         public static class GeoTuner_CreateResearchChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(GeoTuner), "CreateResearchChore") != null;
+
             public static void Postfix(GeoTuner.Instance smi, ref Chore __result)
             {
                 if (__result != null && smi != null)
@@ -116,6 +126,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(Telescope), "CreateChore")]
         public static class Telescope_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(Telescope), "CreateChore") != null;
+
             public static void Postfix(Telescope __instance, ref Chore __result)
             {
                 if (__result != null && __instance != null)
@@ -129,6 +141,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(ClusterTelescope.Instance), nameof(ClusterTelescope.Instance.CreateRevealTileChore))]
         public static class ClusterTelescope_CreateRevealTileChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(ClusterTelescope.Instance), nameof(ClusterTelescope.Instance.CreateRevealTileChore)) != null;
+
             public static void Postfix(ClusterTelescope.Instance __instance, ref Chore __result)
             {
                 if (__result != null && __instance != null)
@@ -141,6 +155,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(ClusterTelescope.Instance), nameof(ClusterTelescope.Instance.CreateIdentifyMeteorChore))]
         public static class ClusterTelescope_CreateIdentifyMeteorChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(ClusterTelescope.Instance), nameof(ClusterTelescope.Instance.CreateIdentifyMeteorChore)) != null;
+
             public static void Postfix(ClusterTelescope.Instance __instance, ref Chore __result)
             {
                 if (__result != null && __instance != null)
@@ -154,6 +170,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(FoodSmoker), "CreateChore")]
         public static class FoodSmoker_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(FoodSmoker), "CreateChore") != null;
+
             public static void Postfix(FoodSmoker.StatesInstance smi, ref Chore __result)
             {
                 if (__result != null && smi != null)
@@ -167,6 +185,8 @@ namespace AutoMachineRebuilt.Patches
         [HarmonyPatch(typeof(RanchStation.Instance), nameof(RanchStation.Instance.CreateChore))]
         public static class RanchStation_CreateChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(RanchStation.Instance), nameof(RanchStation.Instance.CreateChore)) != null;
+
             public static void Postfix(RanchStation.Instance __instance, ref Chore __result)
             {
                 if (__result != null && __instance != null)
@@ -177,9 +197,11 @@ namespace AutoMachineRebuilt.Patches
         }
 
         /// <summary>Oil Refinery: Suppress conversion work chore when automated.</summary>
-        [HarmonyPatch(typeof(OilRefinery), "SetRemoteChore")]
+        [HarmonyPatch(typeof(OilRefinery.States), "SetRemoteChore")]
         public static class OilRefinery_SetRemoteChore_Patch
         {
+            public static bool Prepare() => AccessTools.Method(typeof(OilRefinery.States), "SetRemoteChore") != null;
+
             public static void Postfix(OilRefinery.StatesInstance smi, Chore chore)
             {
                 if (chore != null && smi != null)
