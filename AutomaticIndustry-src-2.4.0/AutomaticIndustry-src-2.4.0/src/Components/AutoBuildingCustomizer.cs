@@ -39,17 +39,24 @@ namespace AutoMachineRebuilt.Components
         private static StatusItem statusItemManual;
         private static StatusItem statusItemPending;
 
-        private static readonly EventSystem.IntraObjectHandler<AutoBuildingCustomizer> OnRefreshUserMenuDelegate =
-            new EventSystem.IntraObjectHandler<AutoBuildingCustomizer>(delegate (AutoBuildingCustomizer cmp, object data)
+        private int refreshUserMenuSubId = -1;
+        private int copySettingsSubId = -1;
+
+        private static readonly Action<object, object> OnRefreshUserMenuAction = (data, context) =>
+        {
+            if (context is AutoBuildingCustomizer cmp)
             {
                 cmp.OnRefreshUserMenu(data);
-            });
+            }
+        };
 
-        private static readonly EventSystem.IntraObjectHandler<AutoBuildingCustomizer> OnCopySettingsDelegate =
-            new EventSystem.IntraObjectHandler<AutoBuildingCustomizer>(delegate (AutoBuildingCustomizer cmp, object data)
+        private static readonly Action<object, object> OnCopySettingsAction = (data, context) =>
+        {
+            if (context is AutoBuildingCustomizer cmp)
             {
                 cmp.OnCopySettings(data);
-            });
+            }
+        };
 
         public bool IsAutomated => isAutomated;
         public bool HasUserOverride => hasUserOverride;
@@ -98,8 +105,8 @@ namespace AutoMachineRebuilt.Components
                 }
             }
 
-            Subscribe(493375141, OnRefreshUserMenuDelegate); // GameHashes.RefreshUserMenu
-            Subscribe(-905833192, OnCopySettingsDelegate);   // GameHashes.CopySettings
+            refreshUserMenuSubId = Subscribe(493375141, OnRefreshUserMenuAction, this); // GameHashes.RefreshUserMenu
+            copySettingsSubId = Subscribe(-905833192, OnCopySettingsAction, this);   // GameHashes.CopySettings
 
             if (pendingToggle)
             {
@@ -782,8 +789,8 @@ namespace AutoMachineRebuilt.Components
         protected override void OnCleanUp()
         {
             CancelChore();
-            Unsubscribe(493375141, OnRefreshUserMenuDelegate);
-            Unsubscribe(-905833192, OnCopySettingsDelegate);
+            Unsubscribe(ref refreshUserMenuSubId);
+            Unsubscribe(ref copySettingsSubId);
 
             // Clean up registry override on in-game deconstruction, but preserve when saving/exiting
             if (!App.IsExiting && !KMonoBehaviour.isLoadingScene)
