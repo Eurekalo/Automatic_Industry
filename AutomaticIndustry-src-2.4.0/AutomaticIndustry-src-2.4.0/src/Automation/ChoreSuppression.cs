@@ -2,33 +2,32 @@
 
 using System;
 using System.Collections.Generic;
+using AutoMachineRebuilt.Patches;
 using AutoMachineRebuilt.Util;
 
 namespace AutoMachineRebuilt.Automation
 {
     /// <summary>
-    /// Cancels Duplicant "operate the machine" chores on buildings that are
+    /// Suppresses Duplicant "operate the machine" chores on buildings that are
     /// currently being driven by an automation controller.
     ///
-    /// The suppression is deliberately conservative:
-    /// <list type="bullet">
-    /// <item>Only chores whose type is in the <see cref="OperateChoreIds"/>
-    /// set are cancelled. Every delivery, fetch, sweep, mop, repair and
-    /// deconstruct chore is preserved.</item>
-    /// <item>Chores are only cancelled while the automation is actively
-    /// driving the building (the controller has set the building to active).
-    /// When the automation is turned off the vanilla state machine recreates
-    /// the operate chore on its next cycle.</item>
-    /// <item>Global chore providers and chore types are never modified.</item>
-    /// </list>
+    /// Rather than calling chore.Cancel(...) in a high-frequency polling loop
+    /// (which triggers state machine failure exits, re-entrant chore recreation loops,
+    /// and massive ReportManager Note allocation leaks over hundreds of cycles),
+    /// suppression attaches a dynamic precondition to candidate chores.
+    ///
+    /// The precondition evaluates whether automation is enabled:
+    /// - While automated: Duplicants completely ignore the chore.
+    /// - When reverted to manual: Duplicants immediately take the chore.
+    /// - The chore is never repeatedly created or destroyed, eliminating memory leaks.
     /// </summary>
     internal static class ChoreSuppression
     {
         /// <summary>
         /// Chore type identifiers that represent "operating the machine" and
-        /// must be cancelled when automation is driving the building.
+        /// must be suppressed when automation is driving the building.
         /// </summary>
-        private static readonly HashSet<string> OperateChoreIds =
+        internal static readonly HashSet<string> OperateChoreIds =
             new HashSet<string>(StringComparer.Ordinal)
             {
                 "Fabricate",
@@ -49,61 +48,94 @@ namespace AutoMachineRebuilt.Automation
                 "AnalyzeSeed",
                 "Depressurize",
                 "ScrubOre",
-                "FlipCompost"
+                "FlipCompost",
+                "Ranch"
             };
 
         /// <summary>
-        /// Cancels all "operate" chores that target the given building.
+        /// Checks whether the given chore already carries the mod suppression precondition.
+        /// </summary>
+        internal static bool HasSuppressionPrecondition(Chore chore)
+        {
+            if (chore == null) return false;
+            var list = chore.GetPreconditions();
+            if (list == null) return false;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].condition.id == StationChoreSuppressionPatches.DisabledByModPrecondition.id)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Applies the suppression precondition to the chore, dislodging active workers if necessary.
+        /// </summary>
+        internal static void SuppressChore(Chore chore)
+        {
+            if (chore == null || chore.isComplete) return;
+
+            // If a Duplicant is currently working this machine, stop them safely
+            if (chore.InProgress() && chore.driver != null)
+            {
+                chore.driver.StopChore();
+            }
+
+            if (!HasSuppressionPrecondition(chore))
+            {
+                chore.AddPrecondition(StationChoreSuppressionPatches.DisabledByModPrecondition, null);
+            }
+        }
+
+        /// <summary>
+        /// Suppresses all "operate" chores that target the given building.
         ///
-        /// Called from <see cref="Components.AutoWorkControllerBase"/> after
-        /// each successful automation step while the controller is active.
+        /// Called from <see cref="Components.AutoWorkControllerBase"/> while the controller is active.
         /// </summary>
         /// <param name="building">Building whose chores to inspect.</param>
-        internal static void CancelOperateChores(UnityEngine.GameObject building)
+        internal static void SuppressOperateChores(UnityEngine.GameObject building)
         {
             if (building == null)
             {
                 return;
             }
 
-            SafeInvoke.Try("Chore suppression", delegate
+            // 1. ChoreProvider is the per-building chore registry.
+            ChoreProvider provider = building.GetComponent<ChoreProvider>();
+            if (provider != null && provider.choreWorldMap != null && provider.choreWorldMap.Count > 0)
             {
-                // 1. ChoreProvider is the per-building chore registry. Every
-                // chore the building publishes is visible here.
-                ChoreProvider provider = building.GetComponent<ChoreProvider>();
-                if (provider != null && provider.choreWorldMap != null && provider.choreWorldMap.Count > 0)
+                foreach (var pair in provider.choreWorldMap)
                 {
-                    foreach (var pair in provider.choreWorldMap)
+                    List<Chore> list = pair.Value;
+                    if (list == null || list.Count == 0) continue;
+
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        List<Chore> list = pair.Value;
-                        if (list == null || list.Count == 0) continue;
+                        Chore chore = list[i];
+                        if (chore == null || chore.isComplete) continue;
 
-                        for (int i = list.Count - 1; i >= 0; i--)
+                        string typeId = chore.choreType != null ? chore.choreType.Id : null;
+                        if (!string.IsNullOrEmpty(typeId) && OperateChoreIds.Contains(typeId))
                         {
-                            if (i >= list.Count) continue;
-                            Chore chore = list[i];
-                            if (chore == null || chore.isComplete)
-                            {
-                                continue;
-                            }
-
-                            string typeId = chore.choreType != null ? chore.choreType.Id : null;
-                            if (string.IsNullOrEmpty(typeId))
-                            {
-                                continue;
-                            }
-
-                            if (OperateChoreIds.Contains(typeId))
-                            {
-                                chore.Cancel("Automated by AutoMachine Rebuilt");
-                            }
+                            SuppressChore(chore);
                         }
                     }
                 }
+            }
 
-                // 2. Component chore fields and state machine data tables
-                LocalChoreProbe.CancelLocalOperateChores(building, OperateChoreIds);
-            });
+            // 2. Component chore fields and state machine data tables
+            LocalChoreProbe.SuppressLocalOperateChores(building, OperateChoreIds);
+        }
+
+        /// <summary>
+        /// Backward-compatible alias for <see cref="SuppressOperateChores"/>.
+        /// </summary>
+        /// <param name="building">Building whose chores to inspect.</param>
+        internal static void CancelOperateChores(UnityEngine.GameObject building)
+        {
+            SuppressOperateChores(building);
         }
     }
 }

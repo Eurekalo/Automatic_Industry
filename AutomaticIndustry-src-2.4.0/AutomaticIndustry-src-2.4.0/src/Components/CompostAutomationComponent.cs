@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Automatic Industry contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 Automatic Industry contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using AutoMachineRebuilt.Automation;
@@ -74,7 +74,7 @@ namespace AutoMachineRebuilt.Components
 
             if (AutoMachineOptions.IsEnabledFor(gameObject, "COMPOST"))
             {
-                ChoreSuppression.CancelOperateChores(gameObject);
+                ChoreSuppression.SuppressOperateChores(gameObject);
             }
         }
 
@@ -89,7 +89,7 @@ namespace AutoMachineRebuilt.Components
 
             if (automated)
             {
-                ChoreSuppression.CancelOperateChores(gameObject);
+                ChoreSuppression.SuppressOperateChores(gameObject);
             }
 
             UpdateConversionProgressBar();

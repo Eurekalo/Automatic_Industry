@@ -127,13 +127,34 @@ namespace AutoMachineRebuilt.Components
                 }
             }
 
-            Guarded("automating " + optionKey, delegate { Step(dt); });
+            try
+            {
+                Step(dt);
+                failures = 0;
+            }
+            catch (Exception e)
+            {
+                failures++;
+                Log.Error("Automation error while automating " + optionKey + " (" + name + ", failure " +
+                          failures + " of " + FailureLimit + ").", e);
 
-            // While the controller is actively automating this building, cancel
+                if (failures >= FailureLimit)
+                {
+                    brokenOut = true;
+                    recoveryTimer = 0f;
+                    Log.Warn("Automation paused for this " + optionKey +
+                             " instance after repeated failures; the building keeps working " +
+                             "normally with Duplicants and retries in " +
+                             RecoveryDelaySeconds + " s.");
+                    SafeInvoke.Try("stopping " + optionKey, StopAutomation);
+                }
+            }
+
+            // While the controller is actively automating this building, suppress
             // any Duplicant "operate the machine" chore so they do not walk
             // over and compete with the automation. Logistics chores (fetch,
             // deliver, empty) are preserved.
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
         }
 
         /// <summary>

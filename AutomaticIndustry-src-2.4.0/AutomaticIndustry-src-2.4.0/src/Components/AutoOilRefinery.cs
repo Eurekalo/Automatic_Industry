@@ -1,6 +1,7 @@
 // Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
+using System;
 using AutoMachineRebuilt.Automation;
 using AutoMachineRebuilt.Config;
 using AutoMachineRebuilt.Util;
@@ -180,7 +181,7 @@ namespace AutoMachineRebuilt.Components
                 return;
             }
 
-            SafeInvoke.Try("Oil Refinery automatic operation", delegate
+            try
             {
                 if (refinery == null) refinery = GetComponent<OilRefinery>();
                 if (operational == null) operational = GetComponent<Operational>();
@@ -206,8 +207,8 @@ namespace AutoMachineRebuilt.Components
                         workable.StopWork(workable.worker, true);
                     }
 
-                    // Suppress and cancel all operate chores on this refinery
-                    ChoreSuppression.CancelOperateChores(gameObject);
+                    // Suppress all operate chores on this refinery
+                    ChoreSuppression.SuppressOperateChores(gameObject);
                 }
 
                 if (shouldRun != drivingActiveFlag || (operational != null && operational.IsActive != shouldRun))
@@ -235,7 +236,11 @@ namespace AutoMachineRebuilt.Components
                         WorkAnim.PlayIdle(animController);
                     }
                 }
-            });
+            }
+            catch (Exception e)
+            {
+                Log.Error("Oil Refinery automatic operation failed", e);
+            }
         }
 
         /// <summary>Releases the active flag when the building disappears.</summary>

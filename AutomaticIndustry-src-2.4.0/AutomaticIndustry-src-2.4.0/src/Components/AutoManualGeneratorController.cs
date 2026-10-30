@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using AutoMachineRebuilt.Automation;
@@ -33,7 +33,7 @@ namespace AutoMachineRebuilt.Components
         {
             base.Prepare();
             generator = GetComponent<ManualGenerator>();
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
         }
 
         /// <summary>Starts or stops the wheel following the circuit battery state and refill threshold.</summary>
@@ -46,7 +46,7 @@ namespace AutoMachineRebuilt.Components
             }
 
             // Suppress duplicant operate chores while automation is active
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
 
             bool wanted = ShouldGeneratePower();
 

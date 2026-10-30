@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using System;
@@ -17,7 +17,7 @@ namespace AutoMachineRebuilt.Components
     /// with no finite completion progress (workTime = infinity).
     /// This controller performs active cooling directly via <see cref="IceCooledFan.DoCooling(float)"/>
     /// without requiring a Duplicant, suppresses operate chores, hides the meaningless 0% progress bar,
-    /// and supports the optional "Ignore Too Cold" mode to continue cooling below 5°C.
+    /// and supports the optional "Ignore Too Cold" mode to continue cooling below 5掳C.
     /// </summary>
     public sealed class AutoIceCooledFanController : AutoWorkControllerBase
     {
@@ -44,7 +44,7 @@ namespace AutoMachineRebuilt.Components
                 workable.ShowProgressBar(false);
             }
 
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
         }
 
         protected override void Step(float dt)
@@ -58,7 +58,7 @@ namespace AutoMachineRebuilt.Components
             }
 
             // Suppress Duplicant operate chores completely
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
 
             // Check if ice/snow material is stored
             if (!fan.HasMaterial())

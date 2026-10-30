@@ -8,24 +8,39 @@ namespace AutoMachineRebuilt.Patches
 {
     /// <summary>
     /// Comprehensive chore suppression patches across all specialized station and manufacturing buildings:
-    /// SpiceGrinder, ResearchCenter, NuclearResearchCenter, GeneticAnalysisStation, GeoTuner, Telescope, ClusterTelescope, FoodSmoker.
+    /// SpiceGrinder, ResearchCenter, NuclearResearchCenter, GeneticAnalysisStation, GeoTuner, Telescope, ClusterTelescope, FoodSmoker,
+    /// RanchStation (Grooming, Shearing, Milking, land and aquatic), and Oil Refinery.
     ///
     /// Rather than returning null from CreateChore callbacks (which crashes GameStateMachine.State.SetupChore
-    /// with a NullReferenceException when hooking state transitions), these patches attach an Always-False
-    /// precondition to the chore.
+    /// with a NullReferenceException when hooking state transitions) or cancelling chores in a polling loop
+    /// (which causes state machine failure transitions, re-entrant chore creation loops, and ReportManager memory leaks),
+    /// these patches attach an intelligent precondition to the chore.
     ///
     /// This guarantees:
-    /// 1. The StateMachine receives a valid non-null Chore and hooks lifecycle transitions without crashing.
-    /// 2. Duplicant chore assignment completely ignores the chore (no Duplicant will ever accept or approach it).
+    /// 1. The StateMachine receives a valid non-null Chore and hooks lifecycle transitions without crashing or looping.
+    /// 2. Duplicants completely ignore the chore when automated (zero Duplicants will accept or approach it).
     /// 3. Standard Duplicant operation is cleanly preserved when set to manual mode.
+    /// 4. Zero ReportManager note spam, zero re-entrant chore allocations, zero memory leak.
     /// </summary>
     internal static class StationChoreSuppressionPatches
     {
-        private static readonly Chore.Precondition DisabledByModPrecondition = new Chore.Precondition
+        internal static readonly Chore.Precondition DisabledByModPrecondition = new Chore.Precondition
         {
-            id = "AutomaticIndustry_StationDisabledByMod",
+            id = "AutomaticIndustry_DisabledByMod",
             description = "Automated by Automatic Industry",
-            fn = (ref Chore.Precondition.Context context, object data) => false
+            fn = (ref Chore.Precondition.Context context, object data) =>
+            {
+                if (context.chore != null && context.chore.gameObject != null)
+                {
+                    KPrefabID prefabID = context.chore.gameObject.GetComponent<KPrefabID>();
+                    string optionKey = prefabID != null ? prefabID.PrefabTag.Name : null;
+                    if (!string.IsNullOrEmpty(optionKey) && AutoMachineOptions.IsEnabledFor(context.chore.gameObject, optionKey))
+                    {
+                        return false; // Automated: suppress duplicants
+                    }
+                }
+                return true; // Manual mode: allow duplicants
+            }
         };
 
         private static readonly FieldInfo NuclearChoreField =
@@ -37,7 +52,7 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(SpiceGrinder.StatesInstance smi, ref Chore __result)
             {
-                if (__result != null && smi != null && AutoMachineOptions.IsEnabledFor(smi.gameObject, "SPICEGRINDER"))
+                if (__result != null && smi != null)
                 {
                     __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
@@ -52,12 +67,7 @@ namespace AutoMachineRebuilt.Patches
             {
                 if (__result != null && __instance != null)
                 {
-                    KPrefabID prefabID = __instance.GetComponent<KPrefabID>();
-                    string optionKey = prefabID != null ? prefabID.PrefabTag.Name : null;
-                    if (!string.IsNullOrEmpty(optionKey) && AutoMachineOptions.IsEnabledFor(__instance.gameObject, optionKey))
-                    {
-                        __result.AddPrecondition(DisabledByModPrecondition, null);
-                    }
+                    __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
             }
         }
@@ -68,7 +78,7 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(NuclearResearchCenter.StatesInstance __instance)
             {
-                if (__instance != null && AutoMachineOptions.IsEnabledFor(__instance.gameObject, "NUCLEARRESEARCHCENTER"))
+                if (__instance != null)
                 {
                     Chore chore = NuclearChoreField?.GetValue(__instance) as Chore;
                     chore?.AddPrecondition(DisabledByModPrecondition, null);
@@ -82,7 +92,7 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(GeneticAnalysisStation.StatesInstance smi, ref Chore __result)
             {
-                if (__result != null && smi != null && AutoMachineOptions.IsEnabledFor(smi.gameObject, "GENETICANALYSISSTATION"))
+                if (__result != null && smi != null)
                 {
                     __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
@@ -95,7 +105,7 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(GeoTuner.Instance smi, ref Chore __result)
             {
-                if (__result != null && smi != null && AutoMachineOptions.IsEnabledFor(smi.gameObject, "GEOTUNER"))
+                if (__result != null && smi != null)
                 {
                     __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
@@ -108,7 +118,7 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(Telescope __instance, ref Chore __result)
             {
-                if (__result != null && __instance != null && AutoMachineOptions.IsEnabledFor(__instance.gameObject, "TELESCOPE"))
+                if (__result != null && __instance != null)
                 {
                     __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
@@ -123,12 +133,7 @@ namespace AutoMachineRebuilt.Patches
             {
                 if (__result != null && __instance != null)
                 {
-                    KPrefabID prefabID = __instance.GetComponent<KPrefabID>();
-                    string optionKey = prefabID != null ? prefabID.PrefabTag.Name : "CLUSTERTELESCOPE";
-                    if (AutoMachineOptions.IsEnabledFor(__instance.gameObject, optionKey))
-                    {
-                        __result.AddPrecondition(DisabledByModPrecondition, null);
-                    }
+                    __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
             }
         }
@@ -140,12 +145,7 @@ namespace AutoMachineRebuilt.Patches
             {
                 if (__result != null && __instance != null)
                 {
-                    KPrefabID prefabID = __instance.GetComponent<KPrefabID>();
-                    string optionKey = prefabID != null ? prefabID.PrefabTag.Name : "CLUSTERTELESCOPE";
-                    if (AutoMachineOptions.IsEnabledFor(__instance.gameObject, optionKey))
-                    {
-                        __result.AddPrecondition(DisabledByModPrecondition, null);
-                    }
+                    __result.AddPrecondition(DisabledByModPrecondition, null);
                 }
             }
         }
@@ -156,9 +156,35 @@ namespace AutoMachineRebuilt.Patches
         {
             public static void Postfix(FoodSmoker.StatesInstance smi, ref Chore __result)
             {
-                if (__result != null && smi != null && AutoMachineOptions.IsEnabledFor(smi.gameObject, "FoodSmoker"))
+                if (__result != null && smi != null)
                 {
                     __result.AddPrecondition(DisabledByModPrecondition, null);
+                }
+            }
+        }
+
+        /// <summary>Ranch Stations (Grooming, Shearing, Milking, land and aquatic): Suppress Ranch chore when automated.</summary>
+        [HarmonyPatch(typeof(RanchStation.Instance), nameof(RanchStation.Instance.CreateChore))]
+        public static class RanchStation_CreateChore_Patch
+        {
+            public static void Postfix(RanchStation.Instance __instance, ref Chore __result)
+            {
+                if (__result != null && __instance != null)
+                {
+                    __result.AddPrecondition(DisabledByModPrecondition, null);
+                }
+            }
+        }
+
+        /// <summary>Oil Refinery: Suppress conversion work chore when automated.</summary>
+        [HarmonyPatch(typeof(OilRefinery), "SetRemoteChore")]
+        public static class OilRefinery_SetRemoteChore_Patch
+        {
+            public static void Postfix(OilRefinery.StatesInstance smi, Chore chore)
+            {
+                if (chore != null && smi != null)
+                {
+                    chore.AddPrecondition(DisabledByModPrecondition, null);
                 }
             }
         }

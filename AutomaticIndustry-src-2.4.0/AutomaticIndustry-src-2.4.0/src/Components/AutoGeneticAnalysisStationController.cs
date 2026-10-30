@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 
 using AutoMachineRebuilt.Automation;
 using AutoMachineRebuilt.Config;
@@ -150,7 +150,7 @@ namespace AutoMachineRebuilt.Components
         /// <summary>Cancels conflicting manual Duplicant chores on this station.</summary>
         private void CancelPendingChore()
         {
-            ChoreSuppression.CancelOperateChores(gameObject);
+            ChoreSuppression.SuppressOperateChores(gameObject);
         }
     }
 }

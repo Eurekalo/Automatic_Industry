@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$WorkspaceRoot = (Resolve-Path "$PSScriptRoot\..\..").Path,
     [string]$Version = "2.5.0",
     [string[]]$SecondaryRoots = @()
@@ -63,7 +63,7 @@ Get-ChildItem -Path $WorkspaceRoot -Directory | Where-Object {
     $_.Name -ne "ModMenu-src-1.0.0"
 } | ForEach-Object {
     Write-Host "  Removing older uncompressed folder: $($_.Name)"
-    Remove-Item -Path $_.FullName -Recurse -Force
+    Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host "=== 2. Building Release Assembly with ILRepack ($Version) ==="

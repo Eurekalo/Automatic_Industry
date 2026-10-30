@@ -14,14 +14,15 @@ This technical reference details the dedicated compatibility layers, runtime shi
 | **PLib Mod Options** | — | Layout collapse; method signature differences (`dialog` vs `optionsDialog`). | `OptionsDialogLayoutFixPatch` enforces 1020x720 layout via defensive reflection. | 🛡️ Active Shim |
 | **Customize Buildings** | `1818138009` | Strips vanilla components; infinite composting state recursion. | Dynamic prefix shims return `false` on conflicting patches; `[MyCmpGet]` safety. | 🛡️ Active Shim |
 | **I_实用系统** | `3300147615` | Potential logic port collisions and state synchronization errors. | Clean `GameHashes.OperationalChanged` hooks; zero custom port overrides. | 🟢 Coexistence |
-| **Multithreaded Sim** | `3779276157` | Race conditions against Rust native worker threads. | Automation loops execute strictly on Unity main thread (`ISim200ms`, `ISim1000ms`). | 🟢 Thread-Safe |
+| **Multithreaded Sim** | `3779276157` | Race conditions against Rust native worker threads. | Automation loops execute strictly on Unity main thread (`ISim200ms`, `ISim1000ms`). | 🟢 Fully Compatible (v59-744825-RC-3.1) |
 | **EmptyStorage** | `1748202748` | Dropped items re-picked in infinite loops; entity ID loss. | `VanillaEmptyPaths` exempts player-ejected items from auto-recycling. | 🛡️ Active Shim |
 | **Adjustable / Zoned Arm** | `3745253371` | Hardcoded 4-cell range limits sweep and crop harvesting. | `AutoSweeperHarvestController` dynamically queries custom cell zones. | 🟢 Integrated |
 | **Mod Menu (v1.4.13)** | `3789353358` | UI occlusion; button position misalignment across languages. | Multilingual Options locator + canvas `sortingOrder = 350` layering. | 🎨 Full UI Sync |
-| **FastTrack** | — | High-frequency reflective overhead causing framerate dips. | Full component caching in `Prepare()`; zero reflection in 5Hz tick loops. | ⚡ Optimized |
+| **FastTrack** | — | High-frequency reflective overhead and ReportManager note inflation. | Full component caching in `Prepare()`; dynamic precondition chore suppression. | 🟢 Fully Compatible (Beta 0.18.6.0) |
 | **ONI Together** | — | State desynchronization across multiplayer clients. | State changes broadcast via standard game events and sync packets. | 🟢 Synced |
 | **Ronivan's Legacy Suite** | `3557584850` | Missing UI canvas on `BuildingEditor`; `usingNewSymbolOverrideSystem` assert. | Safe UI parenting resolver + `SymbolOverrideController` auto-healing. | 🛡️ Active Shim |
 | **GeoTuner Audio Safety** | — | Early mod reflection touches `GeoTuner`, freezing sound paths to `null`. | Dynamic sound path auto-healing + prefix null-path muting. | 🛡️ Active Shim |
+| **Long-Cycle Memory Safety** | — | High-frequency chore cancellation inflates `ReportManager` by gigabytes in cycle 200–300 saves. | Dynamic precondition suppression + native ProgressBar reuse + zero-alloc 5 Hz loops. | 🛡️ Active Guard |
 
 ---
 
@@ -67,13 +68,12 @@ sequenceDiagram
 ## 2. PLib UI Layout & Options Dialog Resilience
 
 ### Challenge:
-Bilingual descriptions and long localization strings can push options controls outside the visible dialog window. Upstream PLib parameter signatures also vary between `PDialog dialog` and `OptionsDialog optionsDialog`.
+Bilingual descriptions and long localization strings can push checkboxes, sliders, and color preview pickers outside the visible rect in default PLib dialog layouts. Upstream PLib updates also alter method signatures.
 
 ### Engineering Solution:
 - **`OptionsDialogLayoutFixPatch.cs`**:
-  - Dynamically enforces minimum dialog dimensions (1020x720) with horizontal two-column layout.
-  - Postfix parameters bind cleanly to `object dialog`.
-  - Registered via `SafeInvoke.Try` in `AutoMachineMod.OnLoad()` so future PLib updates load cleanly without crashing.
+  - Dynamically enforces minimum dialog dimensions (1020x720) with horizontal 2-column layout and preview margins.
+  - Patch hooks parameter types safely (`object dialog`), decoupled from Harmony auto-discovery and registered inside `SafeInvoke.Try` in `AutoMachineMod.OnLoad()`.
 
 ---
 
@@ -81,12 +81,11 @@ Bilingual descriptions and long localization strings can push options controls o
 
 ```mermaid
 flowchart TD
-    A["Customize Buildings Harmony Patches"] --> B{"Patches Conflicting Structure?"}
-    B -->|Oil Refinery / Oil Well Cap| C["CustomizeBuildingsCompatibility: Return False"]
-    B -->|Compost States Patch| D["Suppress inert.GoTo composting recursion"]
-    B -->|Desalinator Patch| E["Suppress Destructive Component Removal"]
-    
-    C --> F["Preserve Vanilla Component Architecture"]
+    A["Customize Buildings Patches BuildingDef"] --> B{"Destructive Modifications"}
+    B -->|Removes Workable| C["Auto Machine Harmony Prefix Interception"]
+    B -->|Inert to Composting Loop| C
+    C --> D["Return false: Neutralize Destructive Patches"]
+    C --> E["Fallback to [MyCmpGet] Safe Component Architecture"]
     D --> F
     E --> F
     F --> G["Automatic Industry Controllers Run Safely"]
@@ -202,3 +201,65 @@ flowchart TD
 - **`GeoTunerSoundSafetyPatch.cs`**:
   - **Auto-Healing**: Re-resolves static sound paths against `GlobalAssets.GetSound()` once audio banks load.
   - **Defensive Harmony Prefix**: Verifies `!string.IsNullOrEmpty(soundPath)` prior to triggering playback, safely muting if audio is unavailable.
+
+---
+
+## 8. Chore Suppression & Long-Cycle Memory Leak Elimination
+
+```mermaid
+flowchart TD
+    A["Building Driven by Automation: 5 Hz Evaluation Cadence"] --> B{"Chore Handling Strategy"}
+
+    subgraph SubLegacy ["Legacy Mechanism: Severe Memory Explosion"]
+        B -->|Every 0.2s| C["Chore.Cancel() Polling"]
+        C --> D["State Machine Exit Callback Aborts Chore"]
+        D --> E["State Machine Immediately Re-enters Ready State"]
+        E --> F["New Chore Created Instantly on Next Frame"]
+        F --> G["ReportManager Logs Chore Creation & Cancellation"]
+        G --> H["ReportEntry.notes & NoteStorage.StringTable Explode"]
+        H --> I["Multi-Gigabyte Heap Bloat & Freeze on Save Load at Cycles 200-300"]
+    end
+
+    subgraph SubFixed ["Automatic Industry v2.5.0: Precondition Suppression"]
+        B -->|Attached Once| J["ChoreSuppression.SuppressOperateChores"]
+        J --> K["Attach DisabledByModPrecondition: Idempotent"]
+        K --> L{"Automation Active?"}
+        L -->|Yes| M["Precondition returns False: Duplicants Completely Ignore Chore"]
+        L -->|No: Manual Mode| N["Precondition returns True: Duplicants Immediately Take Chore"]
+        M --> O["Chore Stays Intact: Zero Cancellations, Zero Creations, Zero Report Notes"]
+        O --> P["Flat Managed Heap: Zero Memory Growth Over Hundreds of Cycles"]
+    end
+
+    style A fill:#2d3748,stroke:#4a5568,color:#fff
+    style C fill:#742a2a,stroke:#e53e3e,color:#fff
+    style I fill:#742a2a,stroke:#e53e3e,color:#fff
+    style J fill:#2b6cb0,stroke:#1a365d,color:#fff
+    style P fill:#22543d,stroke:#38a169,color:#fff
+```
+
+### Challenges:
+In long-running colonies (cycles 200–300+), enabling building automation previously caused rapid and unbounded memory growth (several gigabytes), especially when running refinery suites, food kitchens, ranching stations, and plant pulverizers (`MilkPress`).
+1. **Re-entrant Chore Recreation Loop & Note Storage Explosion**:
+   - In previous versions, `AutoWorkControllerBase` and `AutoOilRefinery` polled every 200 ms and called `Chore.Cancel()` on Duplicant operate chores to prevent Duplicants from competing with automation.
+   - In ONI, when state machines define `.ToggleChore(...)` (`OilRefinery`, `RanchStation`, `Compost`, etc.), cancelling the chore immediately triggers the state machine exit callback, causing the state machine to re-enter the ready state and instantiate a new chore immediately on the next frame.
+   - Crucially, ONI's `ReportManager.ReportValue()` logs every chore creation and cancellation as a `Note` object stored inside `ReportManager.reports`. Reports accumulate across hundreds of cycles without eviction and are serialized into the save file. At 5 Hz across dozens of machines, millions of `Note` objects accumulated, bloating heap memory into gigabytes.
+2. **Duplicate Canvas ProgressBar Instantiation**:
+   - `AutoFabricatorController` was creating a secondary `ProgressBar` instance via `ProgressBar.CreateProgressBar(gameObject, ...)` and deleting/recreating it whenever orders changed, causing Canvas UI churn and retaining graphic objects in memory.
+3. **Idle Fabricator Queue Dirtiness Thrash**:
+   - `ComplexFabricatorSim1000msPatch` was forcibly setting `SetQueueDirty()` every 1000ms on idle machines, forcing constant material needs re-computation.
+4. **Critter Navigation Cost Eviction Thrash**:
+   - In `AutoRanchStation`, checking `GetNavigationCost == -1` every 200 ms immediately evicted critters undergoing transient turn/jump animations, causing them to be continuously evicted and re-invited every tick.
+
+### Engineering Solutions:
+- **`ChoreSuppression.cs` & `StationChoreSuppressionPatches.cs` (Precondition Suppression)**:
+  - Replaced destructive chore cancellations with dynamic preconditions: attaching `DisabledByModPrecondition` to candidate chores.
+  - While automation is active, the precondition dynamically evaluates to `false`: Duplicants completely ignore the chore. The chore remains stably idle in memory with zero cancellations, zero re-entrant creations, and zero `ReportManager` note spam.
+  - When the player switches the building to manual in-game, the precondition dynamically evaluates to `true`: Duplicants immediately take the chore without needing state machine restarts or reloads.
+- **`AutoFabricatorController.cs` (Native ProgressBar Delegation)**:
+  - Removed duplicate `ProgressBar` creation; delegates directly to native `ComplexFabricator.showProgressBar`.
+- **`ComplexFabricatorPatches.cs`**:
+  - Removed unconditional `SetQueueDirty()` on idle fabricators in `Sim1000ms`.
+- **`AutoRanchStation.cs`**:
+  - Replaced transient `-1` navigation evictions with a 10-second stuck watchdog; cached reflection parameter arrays.
+- **Zero-Closure 5 Hz Automation Loop**:
+  - Replaced delegate allocations in `AutoWorkControllerBase.Update()` and `AutoOilRefinery.Sim200ms()` with direct inlined execution, eliminating transient GC allocations at 5 Hz.

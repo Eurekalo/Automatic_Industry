@@ -45,10 +45,23 @@ namespace AutoMachineRebuilt.Automation
         private const BindingFlags InstanceFields =
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+        /// <summary>Cached field reference to avoid enumerator allocation on StateMachineController.</summary>
+        private static readonly FieldInfo ControllerStateMachinesField =
+            HarmonyLib.AccessTools.Field(typeof(StateMachineController), "stateMachines");
+
         /// <summary>Reusable list for zero-allocation component queries on Unity main thread.</summary>
         private static readonly List<Component> ReusableComponents = new List<Component>(32);
-        private static readonly List<StateMachine.Instance> ReusableSmis = new List<StateMachine.Instance>(16);
-        private static readonly List<Chore> ReusableChoresToCancel = new List<Chore>(8);
+
+        /// <summary>Helper to access the internal stateMachines list without boxing/enumerator allocation.</summary>
+        private static List<StateMachine.Instance> GetStateMachines(StateMachineController controller)
+        {
+            if (controller == null) return null;
+            if (ControllerStateMachinesField != null)
+            {
+                return ControllerStateMachinesField.GetValue(controller) as List<StateMachine.Instance>;
+            }
+            return null;
+        }
 
         /// <summary>
         /// Returns the workable of the work chore currently offered by
@@ -107,20 +120,45 @@ namespace AutoMachineRebuilt.Automation
                 return null;
             }
 
-            foreach (StateMachine.Instance smi in controller)
+            List<StateMachine.Instance> smis = GetStateMachines(controller);
+            if (smis != null)
             {
-                if (smi == null || smi.dataTable == null)
+                for (int s = 0; s < smis.Count; s++)
                 {
-                    continue;
-                }
-
-                object[] dataTable = smi.dataTable;
-                for (int i = 0; i < dataTable.Length; i++)
-                {
-                    Workable workable = Accept(dataTable[i] as Chore, building);
-                    if (workable != null)
+                    StateMachine.Instance smi = smis[s];
+                    if (smi == null || smi.dataTable == null)
                     {
-                        return workable;
+                        continue;
+                    }
+
+                    object[] dataTable = smi.dataTable;
+                    for (int i = 0; i < dataTable.Length; i++)
+                    {
+                        Workable workable = Accept(dataTable[i] as Chore, building);
+                        if (workable != null)
+                        {
+                            return workable;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (StateMachine.Instance smi in controller)
+                {
+                    if (smi == null || smi.dataTable == null)
+                    {
+                        continue;
+                    }
+
+                    object[] dataTable = smi.dataTable;
+                    for (int i = 0; i < dataTable.Length; i++)
+                    {
+                        Workable workable = Accept(dataTable[i] as Chore, building);
+                        if (workable != null)
+                        {
+                            return workable;
+                        }
                     }
                 }
             }
@@ -186,16 +224,15 @@ namespace AutoMachineRebuilt.Automation
         }
 
         /// <summary>
-        /// Cancels any operate chores found on the building components or state machines.
+        /// Suppresses any operate chores found on building components or state machines
+        /// by attaching the mod suppression precondition instead of cancelling them.
         /// </summary>
-        internal static void CancelLocalOperateChores(GameObject building, HashSet<string> operateChoreIds)
+        internal static void SuppressLocalOperateChores(GameObject building, HashSet<string> operateChoreIds)
         {
             if (building == null || operateChoreIds == null)
             {
                 return;
             }
-
-            ReusableChoresToCancel.Clear();
 
             // 1. Scan component fields
             ReusableComponents.Clear();
@@ -215,10 +252,7 @@ namespace AutoMachineRebuilt.Automation
                     if (chore != null && !chore.isComplete && chore.choreType != null &&
                         operateChoreIds.Contains(chore.choreType.Id))
                     {
-                        if (!ReusableChoresToCancel.Contains(chore))
-                        {
-                            ReusableChoresToCancel.Add(chore);
-                        }
+                        ChoreSuppression.SuppressChore(chore);
                     }
                 }
             }
@@ -228,51 +262,59 @@ namespace AutoMachineRebuilt.Automation
             StateMachineController controller = building.GetComponent<StateMachineController>();
             if (controller != null)
             {
-                // Snapshot the state machine instances to avoid concurrent modification issues
-                ReusableSmis.Clear();
-                foreach (StateMachine.Instance smi in controller)
+                List<StateMachine.Instance> smis = GetStateMachines(controller);
+                if (smis != null)
                 {
-                    if (smi != null)
+                    for (int s = 0; s < smis.Count; s++)
                     {
-                        ReusableSmis.Add(smi);
-                    }
-                }
-
-                for (int s = 0; s < ReusableSmis.Count; s++)
-                {
-                    StateMachine.Instance smi = ReusableSmis[s];
-                    if (smi == null || smi.dataTable == null)
-                    {
-                        continue;
-                    }
-
-                    object[] dataTable = smi.dataTable;
-                    for (int i = 0; i < dataTable.Length; i++)
-                    {
-                        Chore chore = dataTable[i] as Chore;
-                        if (chore != null && !chore.isComplete && chore.choreType != null &&
-                            operateChoreIds.Contains(chore.choreType.Id))
+                        StateMachine.Instance smi = smis[s];
+                        if (smi == null || smi.dataTable == null)
                         {
-                            if (!ReusableChoresToCancel.Contains(chore))
+                            continue;
+                        }
+
+                        object[] dataTable = smi.dataTable;
+                        for (int i = 0; i < dataTable.Length; i++)
+                        {
+                            Chore chore = dataTable[i] as Chore;
+                            if (chore != null && !chore.isComplete && chore.choreType != null &&
+                                operateChoreIds.Contains(chore.choreType.Id))
                             {
-                                ReusableChoresToCancel.Add(chore);
+                                ChoreSuppression.SuppressChore(chore);
                             }
                         }
                     }
                 }
-                ReusableSmis.Clear();
-            }
-
-            // 3. Cancel all gathered operate chores
-            for (int i = 0; i < ReusableChoresToCancel.Count; i++)
-            {
-                Chore chore = ReusableChoresToCancel[i];
-                if (chore != null && !chore.isComplete)
+                else
                 {
-                    chore.Cancel("Automated by AutoMachine Rebuilt");
+                    foreach (StateMachine.Instance smi in controller)
+                    {
+                        if (smi == null || smi.dataTable == null)
+                        {
+                            continue;
+                        }
+
+                        object[] dataTable = smi.dataTable;
+                        for (int i = 0; i < dataTable.Length; i++)
+                        {
+                            Chore chore = dataTable[i] as Chore;
+                            if (chore != null && !chore.isComplete && chore.choreType != null &&
+                                operateChoreIds.Contains(chore.choreType.Id))
+                            {
+                                ChoreSuppression.SuppressChore(chore);
+                            }
+                        }
+                    }
                 }
             }
-            ReusableChoresToCancel.Clear();
+        }
+
+        /// <summary>
+        /// Backward-compatible alias for <see cref="SuppressLocalOperateChores"/>.
+        /// </summary>
+        internal static void CancelLocalOperateChores(GameObject building, HashSet<string> operateChoreIds)
+        {
+            SuppressLocalOperateChores(building, operateChoreIds);
         }
     }
 }

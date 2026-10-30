@@ -15,15 +15,15 @@ namespace AutoMachineRebuilt.Components
     /// their aquatic counterparts) by replaying the vanilla rancher flow
     /// without a Duplicant.
     ///
-    /// Fixes in v2.4.6:
+    /// Fixes:
     /// <list type="bullet">
     /// <item>Active Target Validation: Bypasses the vanilla "if (!HasRancher) return;"
     /// limitation which caused queued critters to get permanently stuck if scales were
     /// sheared, pathing changed, or different critter species coexisted in the room.</item>
     /// <item>Arrival Watchdog: Automatically evicts critters that fail to navigate to
     /// the station within 15 seconds, preventing pathfinding anomalies from stalling the queue.</item>
-    /// <item>Aquatic Pathfinding Isolation: Validates liquid navigation costs for
-    /// Underwater Shearing Stations.</item>
+    /// <item>Zero Thrash Validation: Removes transient 200ms path cost -1 evictions, preventing
+    /// invite-evict-invite churn loops that allocate memory.</item>
     /// </list>
     /// </summary>
     public sealed class AutoRanchStation : AutoWorkControllerBase
@@ -64,6 +64,8 @@ namespace AutoMachineRebuilt.Components
             typeof(RanchStation.Instance).GetMethod(
                 "Abandon",
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+
+        private static readonly object[] ReusableCritterParam = new object[1];
 
         /// <summary>
         /// Work animations of the six stations, best match first.
@@ -171,19 +173,6 @@ namespace AutoMachineRebuilt.Components
                     EvictQueueItem(item, list, i);
                     continue;
                 }
-
-                // 3. Navigation Reachability Check
-                int navCell = targetCell;
-                if (item.HasTag(GameTags.Creatures.Flyer))
-                {
-                    navCell = Grid.CellAbove(navCell);
-                }
-
-                if (item.NavComponent != null && item.NavComponent.GetNavigationCost(navCell) == -1)
-                {
-                    EvictQueueItem(item, list, i);
-                    continue;
-                }
             }
         }
 
@@ -193,10 +182,15 @@ namespace AutoMachineRebuilt.Components
             {
                 try
                 {
-                    AbandonMethod.Invoke(stationSmi, new object[] { item });
+                    ReusableCritterParam[0] = item;
+                    AbandonMethod.Invoke(stationSmi, ReusableCritterParam);
                     return;
                 }
                 catch { }
+                finally
+                {
+                    ReusableCritterParam[0] = null;
+                }
             }
 
             if (item != null)

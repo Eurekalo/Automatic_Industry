@@ -606,7 +606,7 @@ namespace AutoMachineRebuilt.Components
         {
             if (isAutomated)
             {
-                ChoreSuppression.CancelOperateChores(gameObject);
+                ChoreSuppression.SuppressOperateChores(gameObject);
 
                 ComplexFabricator fabricator = GetComponent<ComplexFabricator>();
                 if (fabricator != null && fabricator.GetComponent<ComplexFabricatorWorkable>() != null)

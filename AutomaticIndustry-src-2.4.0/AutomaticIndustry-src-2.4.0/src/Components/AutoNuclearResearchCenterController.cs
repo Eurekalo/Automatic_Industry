@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
+﻿// Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
 using AutoMachineRebuilt.Automation;
@@ -80,7 +80,7 @@ namespace AutoMachineRebuilt.Components
             if (canWork)
             {
                 // Suppress Duplicants from claiming this station
-                ChoreSuppression.CancelOperateChores(gameObject);
+                ChoreSuppression.SuppressOperateChores(gameObject);
                 CancelPendingChore();
 
                 float speedMultiplier = 1f;

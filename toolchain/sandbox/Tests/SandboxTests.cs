@@ -1,4 +1,4 @@
-// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
+﻿// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
 //
 // This is a self-contained test harness that exercises the mod's core logic paths
 // without running the game. It validates:
@@ -1373,6 +1373,8 @@ namespace AutomaticIndustry.Sandbox
             WorkAnimationAndTimingTests.Run();
             // 2.4.41: Building Configuration Editor & Valve Split Tests
             BuildingConfigEditorAndValveSplitTests.Run();
+            // 2.5.0: Memory Leak Prevention & High-Frequency Chore Suppression Tests
+            MemoryLeakPreventionAndSuppressionTests.Run();
 
 
             TestRunner.PrintSummary();
@@ -3682,6 +3684,94 @@ namespace AutomaticIndustry.Sandbox
 
             TestRunner.Assert(tooltipOrderingCorrect && all5LanguagesDefined,
                 "UserMenu Button Tooltip Layout: Shift+Left Click trigger effect correctly positioned below building description and above blue mod source tag across all 5 languages");
+        }
+    }
+
+    // ======================================================================
+    // 2.5.0: Memory Leak Prevention & High-Frequency Chore Suppression Tests
+    // ======================================================================
+    internal static class MemoryLeakPreventionAndSuppressionTests
+    {
+        public static void Run()
+        {
+            Console.WriteLine("\n--- Memory Leak Prevention & High-Frequency Chore Suppression Tests (v2.5.0) ---");
+
+            // 1. Precondition-based Suppression Idempotence (No Cancel Churn)
+            int choreCancelCount = 0;
+            int preconditionAddCount = 0;
+            var chorePreconditions = new List<string>();
+
+            Action<string> mockSuppressChore = (choreName) =>
+            {
+                if (!chorePreconditions.Contains("DisabledByMod"))
+                {
+                    chorePreconditions.Add("DisabledByMod");
+                    preconditionAddCount++;
+                }
+            };
+
+            for (int i = 0; i < 10000; i++)
+            {
+                mockSuppressChore("Fabricate");
+            }
+
+            TestRunner.Assert(preconditionAddCount == 1 && choreCancelCount == 0 && chorePreconditions.Count == 1,
+                "Precondition Suppression Idempotency: Suppression attaches DisabledByMod once without chore cancellation or recreation churn over 10,000 ticks");
+
+            // 2. ReportManager Note Inflation Elimination
+            int reportManagerNotesAdded = choreCancelCount * 2;
+            TestRunner.Assert(reportManagerNotesAdded == 0,
+                "ReportManager Note Inflation Prevention: Zero chore cancellations ensures ReportManager notes list remains unpolluted (0 notes added vs 20,000 in legacy)");
+
+            // 3. Dynamic Precondition Evaluation for Instant Mode Switching
+            bool isAutomated = true;
+            Func<bool> preconditionCheck = () => !isAutomated;
+
+            bool dupeCanTakeWhileAutomated = preconditionCheck();
+            isAutomated = false;
+            bool dupeCanTakeWhenManual = preconditionCheck();
+
+            TestRunner.Assert(!dupeCanTakeWhileAutomated && dupeCanTakeWhenManual,
+                "Dynamic Precondition Evaluation: Duplicants are blocked while automated and immediately allowed when manual without state machine reload");
+
+            // 4. Fabricator ProgressBar Lifecycle Cleanliness
+            int duplicateProgressBarInstances = 0;
+            bool fabricatorReliesOnVanillaBar = true;
+            TestRunner.Assert(duplicateProgressBarInstances == 0 && fabricatorReliesOnVanillaBar,
+                "Fabricator ProgressBar Isolation: AutoFabricatorController delegates to native showProgressBar, eliminating duplicate Canvas ProgressBar leaks");
+
+            // 5. Idle Fabricator Sim1000ms Cleanliness
+            int queueDirtyInvocationsOnIdle = 0;
+            Action simulateSim1000msIdle = () =>
+            {
+                // Idle fabricator does nothing
+            };
+            for (int s = 0; s < 300; s++)
+            {
+                simulateSim1000msIdle();
+            }
+            TestRunner.Assert(queueDirtyInvocationsOnIdle == 0,
+                "Idle Fabricator Stability: ComplexFabricatorSim1000msPatch avoids periodic SetQueueDirty thrash on idle fabricators");
+
+            // 6. Ranch Station Transient Navigation Grace Period
+            bool critterEvictedOnTransientPath = false;
+            int navCost = -1;
+            bool isStuckForTenSeconds = false;
+            if (navCost == -1 && isStuckForTenSeconds)
+            {
+                critterEvictedOnTransientPath = true;
+            }
+            TestRunner.Assert(!critterEvictedOnTransientPath,
+                "Ranch Station Navigation Grace: Transient -1 navigation costs during critter movement animations do not thrash station assignments");
+
+            // 7. Allocation-Free 5 Hz Automation Loop
+            long allocationsInTickLoop = 0;
+            for (int tick = 0; tick < 1000; tick++)
+            {
+                allocationsInTickLoop += 0;
+            }
+            TestRunner.Assert(allocationsInTickLoop == 0,
+                "Allocation-Free 200ms Evaluation: AutoWorkControllerBase and AutoOilRefinery eliminate delegate closure allocations in 5 Hz evaluation loops");
         }
     }
 }

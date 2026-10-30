@@ -68,8 +68,8 @@ namespace AutoMachineRebuilt.Patches
     /// <summary>
     /// Self-healing order and chore watchdog:
     /// 1. If in manual mode (duplicantOperated == true) and has a working order waiting, ensures WorkChore is active.
-    /// 2. If in automated mode (!duplicantOperated) and operational without a current working order, ensures queue is dirty
-    ///    and starts next queued order so unattended machines recover seamlessly after power/toggle on-off cycles.
+    /// 2. If in automated mode (!duplicantOperated) and operational without a current working order,
+    ///    advances to next queued workable order without continuously spamming queue dirty recalculations.
     /// </summary>
     [HarmonyPatch(typeof(ComplexFabricator), "Sim1000ms")]
     internal static class ComplexFabricatorSim1000msPatch
@@ -104,10 +104,9 @@ namespace AutoMachineRebuilt.Patches
                 }
                 else
                 {
-                    // Automated mode: if idle, refresh queue and start next order
+                    // Automated mode: if idle, advance next order if workable without spamming queue dirty recalculations
                     if (__instance.CurrentWorkingOrder == null)
                     {
-                        __instance.SetQueueDirty();
                         AutoFabricatorController.InvokeRefreshAndStartNextOrder(__instance);
                     }
                 }

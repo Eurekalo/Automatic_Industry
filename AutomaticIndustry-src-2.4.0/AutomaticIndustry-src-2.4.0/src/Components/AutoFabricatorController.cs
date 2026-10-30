@@ -25,8 +25,12 @@ namespace AutoMachineRebuilt.Components
     /// the building kanim work loop driven from this controller, because
     /// vanilla only plays it from the Duplicant interaction. This applies to
     /// the Manual Radbolt Generator, the Sushi Bar and all other originally
-    /// manually operated fabricators. The progress bar is also enabled for
-    /// these buildings so the player can see production progress.
+    /// manually operated fabricators.
+    ///
+    /// Vanilla ComplexFabricator natively manages its own ProgressBar instance
+    /// when <c>!duplicantOperated</c> and <c>showProgressBar</c> is enabled,
+    /// so this controller synchronizes the flag without instantiating redundant
+    /// duplicate UI progress bars.
     /// </summary>
     public class AutoFabricatorController : AutoWorkControllerBase
     {
@@ -34,8 +38,7 @@ namespace AutoMachineRebuilt.Components
 
         /// <summary>
         /// Whether the building originally required a Duplicant and therefore
-        /// needs its building animation and progress bar driven from this
-        /// controller.
+        /// needs its building animation driven from this controller.
         /// </summary>
         private bool needsBuildingAnim;
 
@@ -64,9 +67,9 @@ namespace AutoMachineRebuilt.Components
 
             needsBuildingAnim = true;
 
-            if (fabricator != null)
+            if (fabricator != null && AutoMachineOptions.Instance != null)
             {
-                fabricator.showProgressBar = true;
+                fabricator.showProgressBar = AutoMachineOptions.Instance.ProgressBarFabricators;
             }
         }
 
@@ -105,44 +108,9 @@ namespace AutoMachineRebuilt.Components
                 fabricator.showProgressBar = AutoMachineOptions.Instance.ProgressBarFabricators;
             }
 
-            UpdateProgressBar();
-
             if (needsBuildingAnim)
             {
                 UpdateWorkAnimation();
-            }
-        }
-
-        private ProgressBar progressBar;
-
-        private void UpdateProgressBar()
-        {
-            bool show = AutoMachineOptions.Instance != null &&
-                        AutoMachineOptions.Instance.ProgressBarFabricators &&
-                        fabricator != null &&
-                        fabricator.CurrentWorkingOrder != null &&
-                        (operational == null || operational.IsOperational);
-
-            if (show)
-            {
-                if (progressBar == null)
-                {
-                    progressBar = ProgressBar.CreateProgressBar(gameObject, () =>
-                    {
-                        if (fabricator == null)
-                        {
-                            return 0f;
-                        }
-
-                        return Mathf.Clamp01(fabricator.GetPercentComplete());
-                    });
-                }
-                progressBar.SetVisibility(true);
-            }
-            else if (progressBar != null)
-            {
-                progressBar.gameObject.DeleteObject();
-                progressBar = null;
             }
         }
 
@@ -251,22 +219,10 @@ namespace AutoMachineRebuilt.Components
                 StopAnimation();
                 ToggleRadboltEmitter(false);
             }
-
-            if (progressBar != null)
-            {
-                progressBar.gameObject.DeleteObject();
-                progressBar = null;
-            }
         }
 
         protected override void OnCleanUp()
         {
-            if (progressBar != null)
-            {
-                progressBar.gameObject.DeleteObject();
-                progressBar = null;
-            }
-
             base.OnCleanUp();
         }
     }

@@ -1,4 +1,19 @@
-## 2.5.0
+﻿## 2.5.0
+
+- **Critical Memory Leak Elimination & High-Frequency Chore Suppression (内存泄露根治与高频任务抑制重构)**:
+  - **Dynamic Precondition Suppression (动态前置条件抑制，杜绝任务取消重建风暴与 ReportManager 内存爆炸)**:
+    - 针对 200-300 周期长存档中开启自动工作导致内存疯狂增加的问题，根因定位为：此前每 0.2 秒在 `AutoWorkControllerBase` 和 `AutoOilRefinery` 等控制器中频繁调用 `chore.Cancel()` 取消复制人操作任务。原版游戏在状态机退出时会瞬间再次进入状态重新生成任务，并向 `ReportManager` 持续写入取消与创建的报告记录（`Note` 和 `NoteStorage`）。随着周期推移，数以百万计的报告对象无法释放，导致内存暴增达数 GB 并在存档时引发严重卡顿与泄露。
+    - 彻底重构抑制机制为前置条件法：为所有受管操作任务挂载 `DisabledByModPrecondition`。自动化开启时前置条件动态返回 `false`，复制人绝不认领该任务，状态机平稳运行且任务永不被反复销毁与重建；玩家切回手动时前置条件动态返回 `true`，复制人立即可认领工作，彻底消除内存爆炸。
+  - **AutoFabricatorController 重复进度条与 UI 销毁泄露修复**:
+    - 移除了在 `AutoFabricatorController` 中额外手动创建的 `ProgressBar` 实例，全面转为复用原版 `ComplexFabricator` 原生内置的 `showProgressBar`，杜绝每秒重复分配与 Canvas 界面重排引起的内存膨胀。
+  - **ComplexFabricator 待机队列高频标记移除**:
+    - 移除了 `ComplexFabricatorSim1000msPatch` 在待机状态下每秒强制执行 `SetQueueDirty()` 的高频标记，避免原料需求表反复计算与垃圾回收压力。
+  - **AutoRanchStation 畜牧站寻路暂态防抖机制**:
+    - 修复了此前每 0.2 秒检测到动物跳跃/转向等暂态寻路成本为 `-1` 时立即驱离动物的逻辑，避免频繁引发驱离与重新呼叫的死循环；同时缓存了反射参数数组，消除了瞬时反射堆分配。
+  - **5 Hz 仿真主循环闭包零分配优化**:
+    - 移除了 `AutoWorkControllerBase` 与 `AutoOilRefinery` 在每 200ms 执行步进时创建的 lambda 委托与闭包分配，大幅降低 GC 压力，保障长周期超大殖民地 60 FPS 平稳运行。
+  - **FastTrack 0.18.6.0 与 Multithreaded Simulation (RC-3.1) 全面适配**:
+    - 严格验证并完美兼容最新 FastTrack Beta (0.18.6.0) 以及多线程模拟 Multithreaded Simulation (v59-744825-RC-3.1)，确保自动化逻辑在多线程仿真环境中主线程调度安全无竞态。
 
 - **Building Configuration Editor Immediate Auto-Save & Batch Controls (建筑配置编辑器即时保存与批量控制)**:
   - **Immediate Persistence on Toggle & Exit**: Integrated immediate auto-save (`BuildingConfigItem.AutoSave()`) upon toggling any building or conditional sub-option, guaranteeing that deselecting buildings or pressing Exit/Return immediately saves to `config.json`.
@@ -13,7 +28,6 @@
   - **Clean Automated Mode Order Wake-up**: Synchronized `CancelChore`, `SetQueueDirty()`, and `RefreshAndStartNextOrder()` execution upon switching to automated mode, ensuring fabricators (like Sushi Bar, Electric Grill, Rock Crusher) immediately begin cooking and crafting without freezing.
   - **Per-Building User Override Priority**: Fixed `AutoBuildingCustomizer.IsAutomatedFor` to strictly respect per-building player overrides (`hasUserOverride`) regardless of whether the building was globally toggled off in the editor.
   - **Operational On/Off Watchdog in Sim1000ms**: Added self-healing watchdog in `ComplexFabricatorSim1000msPatch` that automatically refreshes the recipe queue and kicks off orders when an unattended fabricator becomes operational after being toggled off and on or restored after power loss.
-
 - **Building Configuration Editor Scope & Usability Refinements (建筑配置编辑器范围与易用性优化)**:
   - **Feature Separation**: Removed **Auto-Sweeper Harvest** (`SolidTransferArm`) and **Geyser Study** (`GeyserStudy`) from the Building Configuration Editor, keeping them strictly inside **Mod Options** under their respective dedicated feature sections (`CategoryAutoSweeper` and `CategoryResearch`).
   - **Virtual Planetarium Consolidation**: Consolidated `CosmicResearchCenter` and `DLC1CosmicResearchCenter` into a single clean `Virtual Planetarium` (`虚拟天象仪`) entry in the Building Configuration Editor, eliminating redundant `（原版）` and `（眼冒金星！）` duplicate entries while simultaneously controlling both vanilla and DLC automation controllers.
