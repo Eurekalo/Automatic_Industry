@@ -1,4 +1,14 @@
-﻿## 2.5.0
+## 2.5.1
+
+- **Mod Enable Boot Crash Fix & Defensive Patch Hardening (模组启用启动崩溃修复与补丁安全加固)**:
+  - **OilRefinery.States Reflection Target Correction (修正原油精炼厂任务反射目标类型)**:
+    - 修复了此前在模组启用时引发游戏启动崩溃 (`HarmonyException: Undefined target method for OilRefinery.SetRemoteChore`) 的严重问题。原版《缺氧》中 `SetRemoteChore` 为嵌套状态机类 `OilRefinery.States` 中的私有静态方法而非 `OilRefinery` 本身，修正了其反射目标声明，使 Harmony `PatchAll` 能够顺畅无阻执行，防止模组加载中断并被游戏置为 Crashed 自动禁用。
+  - **Dynamic `Prepare()` Defensive Guards (全套工作抑制补丁动态安全守卫)**:
+    - 为 `StationChoreSuppressionPatches` 内全部 11 个原版建筑工作抑制 Patch 类增加了静态 `Prepare()` 守卫检测。若目标方法不存在或因第三方模组重构，Harmony 将自动安全跳过该补丁，从底层杜绝启动期未捕获异常。
+  - **Loader Logging Hardening (启动加载日志安全降级)**:
+    - 将 `AutoMachineMod.OnLoad` 中未处理补丁异常的日志严重级别从致命调整为警告（`Log.Warn`），杜绝因可选次要补丁跳过而触发游戏本体崩溃判定。
+
+## 2.5.0
 
 - **Critical Memory Leak Elimination & High-Frequency Chore Suppression (内存泄露根治与高频任务抑制重构)**:
   - **Dynamic Precondition Suppression (动态前置条件抑制，杜绝任务取消重建风暴与 ReportManager 内存爆炸)**:

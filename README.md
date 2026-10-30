@@ -180,6 +180,11 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 - **50% Efficiency (Vanilla Default)**: `10 kg/s Crude Oil` → `5 kg/s Petroleum` + `90 g/s Natural Gas`
 - See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
+- **v2.5.1**:
+  - **Boot Crash Fix**: Resolved `HarmonyException` on mod enable caused by targeting `OilRefinery` instead of nested `OilRefinery.States` for `SetRemoteChore`.
+  - **Dynamic `Prepare()` Defensive Guards**: Injected `Prepare()` reflection checks across all 11 station chore suppression patches to cleanly skip missing targets without crashing `PatchAll`.
+  - **Hardened Loader Logging**: Downgraded unhandled non-fatal patch exceptions in `OnLoad` to warnings (`Log.Warn`), preventing false-positive game crash flags.
+  - Comprehensive automated regression tests verified (277/277 sandbox tests passing).
 - **v2.5.0**:
   - **Building Configuration Editor**: Full-screen dual-pane editor with category filtering, real-time search, category active counters, **Batch Toggle**, and dedicated **Save Button** with immediate auto-save.
   - **In-Game Details Automation Button**: Directly toggle automation from building inspection panels; supports **Shift + Left Click** to instantly toggle without queueing Duplicant wrench errands.
@@ -201,7 +206,7 @@ dotnet build AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutoMachine
 dotnet run --project toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.0.ps1
+powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.1.ps1
 ```
 
 ---

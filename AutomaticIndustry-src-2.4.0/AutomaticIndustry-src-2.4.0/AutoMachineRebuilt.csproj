@@ -13,10 +13,12 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
     <Authors>AutoMachine Rebuilt contributors; original AutoMachine author</Authors>
     <Copyright>MIT License</Copyright>
     <ONIManaged Condition="'$(ONIManaged)' == ''">$(ONI_MANAGED)</ONIManaged>
+    <ONIManaged Condition="'$(ONIManaged)' == '' and Exists('$(MSBuildProjectDirectory)/../Managed/Managed')">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Managed/Managed'))</ONIManaged>
+    <ONIManaged Condition="'$(ONIManaged)' == '' and Exists('$(MSBuildProjectDirectory)/../../Managed/Managed')">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../Managed/Managed'))</ONIManaged>
     <ONIManaged Condition="'$(ONIManaged)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../Managed/Managed'))</ONIManaged>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <NoWarn>MSB3277;$(NoWarn)</NoWarn>

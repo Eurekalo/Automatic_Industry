@@ -94,6 +94,16 @@ flowchart TD
 
 ---
 
+## 🚀 What's New in v2.5.1
+
+- **Mod Enable Boot Crash Prevention**:
+  - Resolved `ArgumentException: Undefined target method` during Harmony `PatchAll` when enabling the mod.
+  - Corrected target reflection type for `OilRefinery_SetRemoteChore_Patch` to nested `OilRefinery.States`.
+  - Added dynamic `Prepare()` defensive guards to all 11 station suppression patches to safely skip obsolete/custom signatures without halting mod initialization.
+  - Re-routed unexpected loader exceptions to non-fatal warnings to avoid false-positive Klei error popups.
+
+---
+
 ## 🚀 What's New in v2.5.0
 
 - **Dual-Pane Building Configuration Editor**:

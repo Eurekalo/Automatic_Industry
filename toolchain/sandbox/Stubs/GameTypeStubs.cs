@@ -544,6 +544,7 @@ public class OilRefinery : KMonoBehaviour
     public class States
     {
         public StateMachine.BaseState ready;
+        public static void SetRemoteChore(StatesInstance smi, Chore chore) {}
     }
 
     public class StatesInstance : StateMachine.Instance

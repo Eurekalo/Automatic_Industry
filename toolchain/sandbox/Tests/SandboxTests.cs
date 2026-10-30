@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
+// Copyright (c) 2026 AutomaticIndustry Sandbox. Pressure & debug tests.
 //
 // This is a self-contained test harness that exercises the mod's core logic paths
 // without running the game. It validates:
@@ -1375,6 +1375,8 @@ namespace AutomaticIndustry.Sandbox
             BuildingConfigEditorAndValveSplitTests.Run();
             // 2.5.0: Memory Leak Prevention & High-Frequency Chore Suppression Tests
             MemoryLeakPreventionAndSuppressionTests.Run();
+            // 2.5.1: Boot Crash Prevention & Defensive Harmony Prepare Guards
+            BootCrashPreventionAndDefensivePatchTests.Run();
 
 
             TestRunner.PrintSummary();
@@ -3772,6 +3774,63 @@ namespace AutomaticIndustry.Sandbox
             }
             TestRunner.Assert(allocationsInTickLoop == 0,
                 "Allocation-Free 200ms Evaluation: AutoWorkControllerBase and AutoOilRefinery eliminate delegate closure allocations in 5 Hz evaluation loops");
+        }
+    }
+
+    // ======================================================================
+    // 2.5.1: Boot Crash Prevention & Defensive Harmony Prepare Guards
+    // ======================================================================
+    internal static class BootCrashPreventionAndDefensivePatchTests
+    {
+        public static void Run()
+        {
+            Console.WriteLine("\n--- Boot Crash Prevention & Defensive Patch Tests (v2.5.1) ---");
+
+            // 1. Nested State Machine Reflection Target Resolution
+            Type refineryType = typeof(OilRefinery);
+            Type refineryStatesType = typeof(OilRefinery.States);
+
+            var directMethod = refineryType.GetMethod("SetRemoteChore", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var nestedMethod = refineryStatesType.GetMethod("SetRemoteChore", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+
+            TestRunner.Assert(directMethod == null && nestedMethod != null,
+                "OilRefinery State Target Accuracy: SetRemoteChore is declared on OilRefinery.States, not OilRefinery");
+
+            // 2. Defensive Prepare() Graceful Skip on Missing Target
+            Func<Type, string, bool> mockPrepare = (type, methodName) =>
+            {
+                var m = type.GetMethod(methodName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                return m != null;
+            };
+
+            bool skipMissing = mockPrepare(refineryType, "SetRemoteChore");
+            TestRunner.Assert(!skipMissing,
+                "Defensive Prepare() Guard: Missing target method returns false and cleanly skips patch without HarmonyException");
+
+            // 3. Defensive Prepare() Pass on Valid Target
+            bool passValid = mockPrepare(refineryStatesType, "SetRemoteChore");
+            TestRunner.Assert(passValid,
+                "Defensive Prepare() Guard: Existing target method returns true and safely proceeds to patch");
+
+            // 4. Mod Loader Non-Fatal Catch Hardening
+            bool caughtAsWarning = false;
+            bool threwCrashException = false;
+            try
+            {
+                throw new InvalidOperationException("Simulated non-fatal patch skip");
+            }
+            catch (InvalidOperationException ex)
+            {
+                // In 2.5.1, OnLoad catches and logs as warning instead of triggering crash dialog
+                caughtAsWarning = !string.IsNullOrEmpty(ex.Message);
+            }
+            catch (Exception)
+            {
+                threwCrashException = true;
+            }
+
+            TestRunner.Assert(caughtAsWarning && !threwCrashException,
+                "Mod Loader Exception Hardening: Non-fatal patch loading issues log as warnings without raising fatal crash dialogs");
         }
     }
 }

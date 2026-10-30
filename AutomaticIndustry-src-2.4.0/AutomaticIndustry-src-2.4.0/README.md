@@ -197,6 +197,10 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](CHANGELOG.md) for full patch notes.
 
+- **v2.5.1**:
+  - Boot Crash Fix: Resolved `HarmonyException` on mod enable caused by targeting `OilRefinery` instead of nested `OilRefinery.States` for `SetRemoteChore`.
+  - Dynamic `Prepare()` Defensive Guards: Injected `Prepare()` reflection checks across all 11 station chore suppression patches to cleanly skip missing targets without crashing `PatchAll`.
+  - Hardened Loader Logging: Downgraded unhandled non-fatal patch exceptions in `OnLoad` to warnings (`Log.Warn`), preventing false-positive game crash flags.
 - **v2.5.0**:
   - Refined Building Configuration Editor scope: removed Auto-Sweeper Harvest and Geyser Study from the editor list (kept exclusively in Mod Options).
   - Consolidated Virtual Planetarium (`虚拟天象仪`) into a single unified entry, removing redundant base game / DLC duplicate listings.
