@@ -305,6 +305,29 @@ namespace AutoMachineRebuilt.Components
             return found;
         }
 
+        private static readonly PropertyInfo s_primaryCropIdProp = typeof(Crop).GetProperty("primaryCropId", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo s_cropIdField = typeof(Crop).GetField("cropId", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static string GetCropId(Crop crop)
+        {
+            if (crop == null) return null;
+            try
+            {
+                if (s_primaryCropIdProp != null)
+                {
+                    return s_primaryCropIdProp.GetValue(crop, null) as string;
+                }
+                if (s_cropIdField != null)
+                {
+                    return s_cropIdField.GetValue(crop) as string;
+                }
+            }
+            catch
+            {
+            }
+            return null;
+        }
+
         /// <summary>
         /// Checks if a crop's product tag is allowed by ZonedSolidTransferArm's item filter if active.
         /// </summary>
@@ -320,10 +343,11 @@ namespace AutoMachineRebuilt.Components
                     if (method != null && (bool)method.Invoke(filterCmp, null))
                     {
                         var crop = plant.GetComponent<Crop>();
-                        if (crop != null && !string.IsNullOrEmpty(crop.cropId))
+                        string cropId = GetCropId(crop);
+                        if (!string.IsNullOrEmpty(cropId))
                         {
                             var treeFilterable = GetComponent<TreeFilterable>();
-                            if (treeFilterable != null && !treeFilterable.AcceptedTags.Contains(new Tag(crop.cropId)))
+                            if (treeFilterable != null && !treeFilterable.AcceptedTags.Contains(new Tag(cropId)))
                             {
                                 return false;
                             }
