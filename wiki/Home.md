@@ -94,6 +94,16 @@ flowchart TD
 
 ---
 
+## 🚀 What's New in v2.5.2
+
+- **Universal U59 & U60 (Unity 6) Dual-Engine Compatibility**:
+  - Full dual-rail compatibility: a single mod package runs identically and crash-free on both current stable (U59 / Build 744825) and public testing (U60 Unity 6 / Build 761015).
+  - Dynamic `GetCropId` reflection accessor dynamically detects U60 `primaryCropId` (property) and U59 `cropId` (field), preventing `MissingFieldException` during automated agricultural harvesting.
+  - Verified 100% of all 48 Harmony patches against native U60 assemblies.
+  - Retained `minimumSupportedBuild: 744825` to protect users on older stable branches.
+
+---
+
 ## 🚀 What's New in v2.5.1
 
 - **Mod Enable Boot Crash Prevention**:

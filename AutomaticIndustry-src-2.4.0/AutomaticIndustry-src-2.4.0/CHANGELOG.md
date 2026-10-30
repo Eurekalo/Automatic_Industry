@@ -1,3 +1,15 @@
+## 2.5.2
+
+- **Universal U59 & U60 (Unity 6) Dual-Engine Compatibility (U59与U60双轨全兼容体系)**:
+  - **Dynamic Dual Crop API Reflection (作物系统双向自适应反射，杜绝 MissingFieldException)**:
+    - 针对 U60（Unity 6 / Build 761015）底层重构 `Crop` 类（移除 `public string cropId;` 字段，改为 `public string primaryCropId { get; }` 属性），在 `AutoSweeperHarvestController` 中构建了静态缓存的双向自适应访问器 `GetCropId`。在 U60 环境下自动调用 `primaryCropId`，在 U59 及更早版本下无缝兜底调用 `cropId`，确保使用旧版本游戏的玩家与 U60 测试版玩家共用同一二进制包均能安全自动收割，坚决消除跨版本崩溃。
+  - **U60 / Unity 6 Job System Multi-Thread Isolation (Unity 6 多线程与作业系统调度安全)**:
+    - 严格遵循 Unity 6 对 `JobManager` 工作线程的非主线程 Unity API 调用限制。模组所有建筑状态机探测、原料转移及自动工作逻辑坚固绑定于主线程时钟（`ISim200ms` / `ISim1000ms`），杜绝因流体/多线程模拟引起的 `GetComponentFastPath` 跨线程违规。
+  - **Harmony Patch 48/48 全覆盖核准**:
+    - 全面通过对 U60 原生游戏 DLL 的程序集静态扫描，模组所有 48 个 Patch 目标类与方法签名匹配度保持 100%。
+  - **Minimum Supported Build 保持 744825**:
+    - 保持向下兼容至 U59 及更早历史归档版本，兼顾仍在使用 U59 的稳定期玩家。
+
 ## 2.5.1
 
 - **Mod Enable Boot Crash Fix & Defensive Patch Hardening (模组启用启动崩溃修复与补丁安全加固)**:

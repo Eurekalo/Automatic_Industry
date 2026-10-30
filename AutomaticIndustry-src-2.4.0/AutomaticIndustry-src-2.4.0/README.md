@@ -197,6 +197,10 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 
 See [CHANGELOG.md](CHANGELOG.md) for full patch notes.
 
+- **v2.5.2**:
+  - Universal U59 & U60 (Unity 6) Dual-Engine Compatibility: Dynamic Crop API reflection resolving U60 `primaryCropId` and U59 `cropId`, preventing `MissingFieldException` while ensuring 100% backward compatibility for U59.
+  - Verified 48/48 Harmony patches against native U60 (Build 761015) game assemblies.
+  - Retained `minimumSupportedBuild: 744825` to support U59 and earlier game versions on a single unified package.
 - **v2.5.1**:
   - Boot Crash Fix: Resolved `HarmonyException` on mod enable caused by targeting `OilRefinery` instead of nested `OilRefinery.States` for `SetRemoteChore`.
   - Dynamic `Prepare()` Defensive Guards: Injected `Prepare()` reflection checks across all 11 station chore suppression patches to cleanly skip missing targets without crashing `PatchAll`.

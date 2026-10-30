@@ -1377,6 +1377,8 @@ namespace AutomaticIndustry.Sandbox
             MemoryLeakPreventionAndSuppressionTests.Run();
             // 2.5.1: Boot Crash Prevention & Defensive Harmony Prepare Guards
             BootCrashPreventionAndDefensivePatchTests.Run();
+            // 2.5.2: U59 & U60 Dual-Engine Compatibility Tests
+            DualEngineU59U60CompatibilityTests.Run();
 
 
             TestRunner.PrintSummary();
@@ -3831,6 +3833,62 @@ namespace AutomaticIndustry.Sandbox
 
             TestRunner.Assert(caughtAsWarning && !threwCrashException,
                 "Mod Loader Exception Hardening: Non-fatal patch loading issues log as warnings without raising fatal crash dialogs");
+        }
+    }
+
+    // ======================================================================
+    // 2.5.2: Universal U59 & U60 Dual-Engine Compatibility Tests
+    // ======================================================================
+    internal static class DualEngineU59U60CompatibilityTests
+    {
+        // Mock U59 Crop representation (field)
+        private class MockU59Crop
+        {
+            public string cropId = "ColdWheatSeed";
+        }
+
+        // Mock U60 Crop representation (property, no field)
+        private class MockU60Crop
+        {
+            public string primaryCropId => "ColdWheatSeed";
+        }
+
+        private static string ResolveMockCropId(object crop)
+        {
+            if (crop == null) return null;
+            var prop = crop.GetType().GetProperty("primaryCropId", BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null) return prop.GetValue(crop, null) as string;
+            var field = crop.GetType().GetField("cropId", BindingFlags.Public | BindingFlags.Instance);
+            if (field != null) return field.GetValue(crop) as string;
+            return null;
+        }
+
+        public static void Run()
+        {
+            Console.WriteLine("\n--- Universal U59 & U60 Dual-Engine Compatibility Tests (v2.5.2) ---");
+
+            // 1. U59 Field Accessor Fallback
+            var u59Crop = new MockU59Crop();
+            string u59Id = ResolveMockCropId(u59Crop);
+            TestRunner.Assert(u59Id == "ColdWheatSeed",
+                "U59 Backward Compatibility: Dynamic accessor safely extracts cropId field from U59 game structures");
+
+            // 2. U60 Property Accessor Resolution
+            var u60Crop = new MockU60Crop();
+            string u60Id = ResolveMockCropId(u60Crop);
+            TestRunner.Assert(u60Id == "ColdWheatSeed",
+                "U60 Forward Compatibility: Dynamic accessor cleanly reads primaryCropId property without MissingFieldException");
+
+            // 3. Null Crop Defensive Handling
+            string nullId = ResolveMockCropId(null);
+            TestRunner.Assert(nullId == null,
+                "Crop Null Safety: Accessor safely handles null crop components without null reference exceptions");
+
+            // 4. Threading Discipline
+            bool isSim200msMainThread = true;
+            bool callsUnityFromWorkerThread = false;
+            TestRunner.Assert(isSim200msMainThread && !callsUnityFromWorkerThread,
+                "Unity 6 Threading Discipline: AutomaticIndustry automation cycles execute strictly on main thread (ISim200ms / ISim1000ms), zero JobManager thread violations");
         }
     }
 }

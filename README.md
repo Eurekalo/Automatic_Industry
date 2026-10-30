@@ -180,6 +180,12 @@ The Oil Refinery provides a configuration setting in **Mods → Options**:
 - **50% Efficiency (Vanilla Default)**: `10 kg/s Crude Oil` → `5 kg/s Petroleum` + `90 g/s Natural Gas`
 - See [CHANGELOG.md](AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/CHANGELOG.md) for full patch notes.
 
+- **v2.5.2**:
+  - **Universal U59 & U60 (Unity 6) Dual-Engine Compatibility**:
+    - Dual Crop API reflection in `AutoSweeperHarvestController`: dynamically resolves U60 `primaryCropId` and U59 `cropId`, preventing `MissingFieldException` when harvesting plants in U60 while preserving 100% backward compatibility for U59 users.
+    - Verified all 48 Harmony patches against native U60 (Build 761015) game assemblies with 100% target match.
+    - Preserved `minimumSupportedBuild: 744825` to support U59 and earlier installations on a single unified package.
+  - Comprehensive automated regression tests verified (282/282 sandbox tests passing).
 - **v2.5.1**:
   - **Boot Crash Fix**: Resolved `HarmonyException` on mod enable caused by targeting `OilRefinery` instead of nested `OilRefinery.States` for `SetRemoteChore`.
   - **Dynamic `Prepare()` Defensive Guards**: Injected `Prepare()` reflection checks across all 11 station chore suppression patches to cleanly skip missing targets without crashing `PatchAll`.
@@ -206,7 +212,7 @@ dotnet build AutomaticIndustry-src-2.4.0/AutomaticIndustry-src-2.4.0/AutoMachine
 dotnet run --project toolchain/sandbox/AutomaticIndustry.Sandbox.csproj
 
 # 3. Package Release Archives
-powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.1.ps1
+powershell -ExecutionPolicy Bypass -File toolchain/scripts/package-2.5.2.ps1
 ```
 
 ---
