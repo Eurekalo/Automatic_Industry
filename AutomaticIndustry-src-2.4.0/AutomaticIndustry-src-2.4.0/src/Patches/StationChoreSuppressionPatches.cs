@@ -32,6 +32,14 @@ namespace AutoMachineRebuilt.Patches
             {
                 if (context.chore != null && context.chore.gameObject != null)
                 {
+                    // Never suppress Tinkerable chores (Mechanics Station custom parts, Power Station microchips, etc.)
+                    if (context.chore.target is Tinkerable ||
+                        (context.chore.choreType != null &&
+                         (context.chore.choreType.Id == "MachineTinker" || context.chore.choreType.Id == "PowerTinker" || context.chore.choreType.Id == "CropTend")))
+                    {
+                        return true; // Always allow tinkering / maintenance buffs
+                    }
+
                     KPrefabID prefabID = context.chore.gameObject.GetComponent<KPrefabID>();
                     string optionKey = prefabID != null ? prefabID.PrefabTag.Name : null;
                     if (!string.IsNullOrEmpty(optionKey) && AutoMachineOptions.IsEnabledFor(context.chore.gameObject, optionKey))

@@ -6,6 +6,7 @@
 [Bb]in/
 [Oo]bj/
 dist/
+*.log
 
 # Visual Studio / Rider / VS Code / OS metadata
 .vs/

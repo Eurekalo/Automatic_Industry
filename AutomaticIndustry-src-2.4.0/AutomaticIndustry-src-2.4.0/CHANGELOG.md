@@ -1,3 +1,11 @@
+## 2.5.3
+
+- **Per-Building Customization UserMenu Button Restoration & EventSystem Parameter Order Fix (单建筑独立控制切换按钮恢复与底层事件系统参数签名修正)**:
+  - **UserMenu 切换按钮全局恢复**: 修复了由于 `EventSystem` 扩展委托形参顺序颠倒导致的在所有建筑详情面板下方无法显示【启用自动化】/【恢复手动】(Enable Automation / Revert to Manual) 以及【遵循全局设置】(Follow Global Setting) 按钮的致命问题。
+  - **EventSystem 分发机制底层对齐**: 逆向游戏底层 `Assembly-CSharp-firstpass.dll` 中的 `EventSystem.Entry.Invoke(data)`，确认原生 `Action<object, object>` 扩展委托签名参数顺序为 `(component, data)`（参数0为组件实例 `context`，参数1为触发事件传递的 `data`）。修正了 `AutoBuildingCustomizer` 中颠倒的 `(data, context)` 命名导致 `context is AutoBuildingCustomizer` 恒为 `null` 的类型断言失效死穴。
+  - **Copy Settings (建筑参数复制) 同步修复**: 修正了建筑间复制设置时同样由于参数倒置无法同步单体自动化状态的问题。
+  - **Mechanics Station (定制零件 1938117526) 自动化完全兼容**: 保持与定制零件制作与安装加速模组的无缝兼容，定制零件与微芯片在自动化建筑内受 100% 保护不被误释放。
+
 ## 2.5.2
 
 - **Universal U59 & U60 (Unity 6) Dual-Engine Compatibility (U59与U60双轨全兼容体系)**:

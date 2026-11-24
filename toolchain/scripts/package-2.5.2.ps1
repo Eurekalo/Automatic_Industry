@@ -19,9 +19,9 @@ if (-not $SecondaryRoots -or $SecondaryRoots.Length -eq 0) {
     $SecondaryRoots = $detected
 }
 
-$srcFolder = Join-Path $WorkspaceRoot "AutomaticIndustry-src-2.4.0\AutomaticIndustry-src-2.4.0"
+$srcFolder = Join-Path $WorkspaceRoot "AutomaticIndustry-src-$Version"
 if (-not (Test-Path $srcFolder)) {
-    $srcFolder = Join-Path $WorkspaceRoot "AutomaticIndustry-src-$Version"
+    $srcFolder = Join-Path $WorkspaceRoot "AutomaticIndustry-src-2.4.0\AutomaticIndustry-src-2.4.0"
 }
 $csproj = Join-Path $srcFolder "AutoMachineRebuilt.csproj"
 $managedDir = Join-Path $WorkspaceRoot "Managed\Managed"

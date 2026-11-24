@@ -124,8 +124,27 @@ namespace AutoMachineRebuilt.Components
                     continue;
                 }
 
-                storage.DropAll(vent_gas: false, dump_liquid: false, offset: Vector3.zero,
-                                do_disease_transfer: true, collect_dropped_items: buffer);
+                if (TinkerMaterials.ContainsTinkerMaterial(storage, gameObject))
+                {
+                    for (int it = storage.items.Count - 1; it >= 0; it--)
+                    {
+                        GameObject item = storage.items[it];
+                        if (item != null && !TinkerMaterials.IsTinkerMaterial(item, gameObject))
+                        {
+                            GameObject result = storage.Drop(item);
+                            if (result != null)
+                            {
+                                buffer.Add(result);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    storage.DropAll(vent_gas: false, dump_liquid: false, offset: Vector3.zero,
+                                    do_disease_transfer: true, collect_dropped_items: buffer);
+                }
+
                 released += buffer.Count;
                 VanillaEmptyPaths.RestoreDroppedInteractions(buffer);
                 buffer.Clear();
@@ -166,6 +185,25 @@ namespace AutoMachineRebuilt.Components
             if (inputStorages.Contains(storage))
             {
                 return false;
+            }
+
+            // If the storage only contains tinker materials (custom parts or microchips),
+            // never release it.
+            if (storage.items != null && storage.items.Count > 0)
+            {
+                bool hasNonTinker = false;
+                for (int it = 0; it < storage.items.Count; it++)
+                {
+                    if (!TinkerMaterials.IsTinkerMaterial(storage.items[it], gameObject))
+                    {
+                        hasNonTinker = true;
+                        break;
+                    }
+                }
+                if (!hasNonTinker)
+                {
+                    return false;
+                }
             }
 
             // Everything that is left is finished output. Several vanilla

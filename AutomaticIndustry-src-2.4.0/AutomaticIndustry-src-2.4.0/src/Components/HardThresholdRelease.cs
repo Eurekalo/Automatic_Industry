@@ -207,7 +207,7 @@ namespace AutoMachineRebuilt.Components
                 for (int i = storage.items.Count - 1; i >= 0; i--)
                 {
                     GameObject item = storage.items[i];
-                    if (item == null || !IsSolid(item))
+                    if (item == null || !IsSolid(item) || TinkerMaterials.IsTinkerMaterial(item, go))
                     {
                         continue;
                     }

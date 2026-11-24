@@ -26,6 +26,10 @@ namespace AutoMachineRebuilt.Automation
         /// <summary>
         /// Chore type identifiers that represent "operating the machine" and
         /// must be suppressed when automation is driving the building.
+        ///
+        /// NOTE: Maintenance and buff chores (MachineTinker, PowerTinker, CropTend)
+        /// are explicitly excluded from this set so Duplicants can freely tune up
+        /// automated buildings (e.g. Mechanics Station custom parts, Power Station microchips).
         /// </summary>
         internal static readonly HashSet<string> OperateChoreIds =
             new HashSet<string>(StringComparer.Ordinal)
@@ -34,11 +38,8 @@ namespace AutoMachineRebuilt.Automation
                 "Cook",
                 "Work",
                 "Research",
-                "MachineTinker",
-                "PowerTinker",
                 "PowerFabricate",
                 "FarmingFabricate",
-                "FarmTinker",
                 "Art",
                 "EmptyDesalinator",
                 "Spice",
@@ -51,6 +52,25 @@ namespace AutoMachineRebuilt.Automation
                 "FlipCompost",
                 "Ranch"
             };
+
+        /// <summary>
+        /// Checks whether a chore is a maintenance or buff chore (e.g. Mechanics Station custom parts,
+        /// Power Control Station microchip tuning, Crop tending) that should remain enabled on automated buildings.
+        /// </summary>
+        internal static bool IsTinkerChore(Chore chore)
+        {
+            if (chore == null) return false;
+            if (chore.target is Tinkerable) return true;
+            if (chore.choreType != null)
+            {
+                string id = chore.choreType.Id;
+                if (id == "MachineTinker" || id == "PowerTinker" || id == "CropTend")
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         /// <summary>
         /// Checks whether the given chore already carries the mod suppression precondition.
@@ -75,7 +95,7 @@ namespace AutoMachineRebuilt.Automation
         /// </summary>
         internal static void SuppressChore(Chore chore)
         {
-            if (chore == null || chore.isComplete) return;
+            if (chore == null || chore.isComplete || IsTinkerChore(chore)) return;
 
             // If a Duplicant is currently working this machine, stop them safely
             if (chore.InProgress() && chore.driver != null)
@@ -114,7 +134,7 @@ namespace AutoMachineRebuilt.Automation
                     for (int i = 0; i < list.Count; i++)
                     {
                         Chore chore = list[i];
-                        if (chore == null || chore.isComplete) continue;
+                        if (chore == null || chore.isComplete || IsTinkerChore(chore)) continue;
 
                         string typeId = chore.choreType != null ? chore.choreType.Id : null;
                         if (!string.IsNullOrEmpty(typeId) && OperateChoreIds.Contains(typeId))

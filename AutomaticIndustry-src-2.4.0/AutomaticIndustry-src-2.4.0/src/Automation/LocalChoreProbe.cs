@@ -240,7 +240,7 @@ namespace AutoMachineRebuilt.Automation
             for (int i = 0; i < ReusableComponents.Count; i++)
             {
                 Component component = ReusableComponents[i];
-                if (component == null)
+                if (component == null || component is Tinkerable)
                 {
                     continue;
                 }
@@ -249,8 +249,8 @@ namespace AutoMachineRebuilt.Automation
                 for (int f = 0; f < fields.Length; f++)
                 {
                     Chore chore = fields[f].GetValue(component) as Chore;
-                    if (chore != null && !chore.isComplete && chore.choreType != null &&
-                        operateChoreIds.Contains(chore.choreType.Id))
+                    if (chore != null && !chore.isComplete && !ChoreSuppression.IsTinkerChore(chore) &&
+                        chore.choreType != null && operateChoreIds.Contains(chore.choreType.Id))
                     {
                         ChoreSuppression.SuppressChore(chore);
                     }
@@ -277,8 +277,8 @@ namespace AutoMachineRebuilt.Automation
                         for (int i = 0; i < dataTable.Length; i++)
                         {
                             Chore chore = dataTable[i] as Chore;
-                            if (chore != null && !chore.isComplete && chore.choreType != null &&
-                                operateChoreIds.Contains(chore.choreType.Id))
+                            if (chore != null && !chore.isComplete && !ChoreSuppression.IsTinkerChore(chore) &&
+                                chore.choreType != null && operateChoreIds.Contains(chore.choreType.Id))
                             {
                                 ChoreSuppression.SuppressChore(chore);
                             }
@@ -298,8 +298,8 @@ namespace AutoMachineRebuilt.Automation
                         for (int i = 0; i < dataTable.Length; i++)
                         {
                             Chore chore = dataTable[i] as Chore;
-                            if (chore != null && !chore.isComplete && chore.choreType != null &&
-                                operateChoreIds.Contains(chore.choreType.Id))
+                            if (chore != null && !chore.isComplete && !ChoreSuppression.IsTinkerChore(chore) &&
+                                chore.choreType != null && operateChoreIds.Contains(chore.choreType.Id))
                             {
                                 ChoreSuppression.SuppressChore(chore);
                             }

@@ -186,7 +186,8 @@ namespace AutoMachineRebuilt.Components
             for (int i = 0; i < candidates.Count; i++)
             {
                 GameObject item = candidates[i];
-                if (item == null || (filter.IsValid && !item.HasTag(filter)))
+                if (item == null || (filter.IsValid && !item.HasTag(filter)) ||
+                    TinkerMaterials.IsTinkerMaterial(item, storage != null ? storage.gameObject : null))
                 {
                     continue;
                 }

@@ -42,17 +42,17 @@ namespace AutoMachineRebuilt.Components
         private int refreshUserMenuSubId = -1;
         private int copySettingsSubId = -1;
 
-        private static readonly Action<object, object> OnRefreshUserMenuAction = (data, context) =>
+        private static readonly Action<object, object> OnRefreshUserMenuAction = (component, data) =>
         {
-            if (context is AutoBuildingCustomizer cmp)
+            if (component is AutoBuildingCustomizer cmp)
             {
                 cmp.OnRefreshUserMenu(data);
             }
         };
 
-        private static readonly Action<object, object> OnCopySettingsAction = (data, context) =>
+        private static readonly Action<object, object> OnCopySettingsAction = (component, data) =>
         {
-            if (context is AutoBuildingCustomizer cmp)
+            if (component is AutoBuildingCustomizer cmp)
             {
                 cmp.OnCopySettings(data);
             }

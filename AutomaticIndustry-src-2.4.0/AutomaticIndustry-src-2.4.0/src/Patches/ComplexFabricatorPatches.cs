@@ -1,10 +1,12 @@
 // Copyright (c) 2026 AutoMachine Rebuilt contributors. Licensed under the MIT License.
 // Original mod concept: "AutoMachine" (Steam Workshop id 2992024030).
 
+using System.Collections.Generic;
 using AutoMachineRebuilt.Components;
 using AutoMachineRebuilt.Config;
 using AutoMachineRebuilt.Util;
 using HarmonyLib;
+using UnityEngine;
 
 namespace AutoMachineRebuilt.Patches
 {
@@ -111,6 +113,44 @@ namespace AutoMachineRebuilt.Patches
                     }
                 }
             });
+        }
+    }
+
+    /// <summary>
+    /// Protects custom parts (Mechanics Station) and microchips (Power Control Station)
+    /// inside ComplexFabricator inStorage from being dropped during queue refreshes.
+    /// </summary>
+    [HarmonyPatch(typeof(ComplexFabricator), "DropExcessIngredients")]
+    internal static class ComplexFabricator_DropExcessIngredients_Patch
+    {
+        private static readonly List<GameObject> PreservedTinkerItems = new List<GameObject>();
+
+        internal static void Prefix(ComplexFabricator __instance, Storage storage)
+        {
+            PreservedTinkerItems.Clear();
+            if (__instance == null || storage == null || storage.items == null) return;
+
+            for (int i = storage.items.Count - 1; i >= 0; i--)
+            {
+                GameObject item = storage.items[i];
+                if (item != null && TinkerMaterials.IsTinkerMaterial(item, __instance.gameObject))
+                {
+                    PreservedTinkerItems.Add(item);
+                    storage.items.RemoveAt(i);
+                }
+            }
+        }
+
+        internal static void Postfix(ComplexFabricator __instance, Storage storage)
+        {
+            if (storage != null && storage.items != null && PreservedTinkerItems.Count > 0)
+            {
+                for (int i = 0; i < PreservedTinkerItems.Count; i++)
+                {
+                    storage.items.Add(PreservedTinkerItems[i]);
+                }
+                PreservedTinkerItems.Clear();
+            }
         }
     }
 }
